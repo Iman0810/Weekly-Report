@@ -1,0 +1,45 @@
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+static/
+staticfiles/
+
+# Django
+backend/backend_config/local_settings.py
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+.docker/
+
+# Testing
+coverage/
+*.coverage
+.pytest_cache/
