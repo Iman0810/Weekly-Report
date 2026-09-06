@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams , Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 
@@ -69,17 +69,41 @@ function ReportForm() {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
+      const payload = {
+        week_start: data.week_start,
+        week_end: data.week_end,
+        project: data.project ? data.project.id : null,
+        tasks: data.tasks,
+        blockers: data.blockers,
+        achievements: data.achievements,
+        hours_worked: data.hours_worked,
+        notes: data.notes,
+      };
+      
       if (isEditing) {
-        const response = await api.put(`/reports/${id}/`, data);
+        // If report was "NEEDS_CORRECTION", change status to "DRAFT" on edit
+        if (report?.status === 'NEEDS_CORRECTION') {
+          payload.status = 'DRAFT';
+        }
+        const response = await api.put(`/reports/${id}/`, payload);
         return response.data;
       } else {
-        const response = await api.post('/reports/', data);
+        const response = await api.post('/reports/', payload);
         return response.data;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['reports']);
+      if (isEditing && report?.status === 'NEEDS_CORRECTION') {
+        alert('✅ Report updated and reset to DRAFT. You can now resubmit it.');
+      } else {
+        alert(isEditing ? '✅ Report updated successfully!' : '✅ Report created successfully!');
+      }
       navigate('/reports');
+    },
+    onError: (error) => {
+      console.error('Error saving report:', error);
+      alert('❌ Failed to save report. Check console for details.');
     },
   });
 
@@ -94,7 +118,7 @@ function ReportForm() {
 
   const addTask = () => {
     if (newTask.name.trim()) {
-      setTasks([...tasks, { ...newTask, id: Date.now() }]);
+      setTasks([...tasks, { ...newTask }]);
       setNewTask({
         name: '',
         priority: 'MEDIUM',
@@ -117,6 +141,14 @@ function ReportForm() {
   return (
     <div className="container mt-4">
       <h2>{isEditing ? 'Edit Report' : 'Create New Report'}</h2>
+      
+      {report?.status === 'NEEDS_CORRECTION' && (
+        <div className="alert alert-warning">
+          <strong>⚠️ Manager's Feedback:</strong>
+          <p className="mb-0">{report.manager_comment}</p>
+          <p className="mb-0 mt-2 small">Editing this report will reset it to DRAFT so you can resubmit.</p>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <div className="row mb-3">
@@ -149,7 +181,7 @@ function ReportForm() {
             value={formData.project?.id || ''}
             onChange={(e) => {
               const project = projects?.find(p => p.id === parseInt(e.target.value));
-              setFormData({ ...formData, project: project });
+              setFormData({ ...formData, project: project || null });
             }}
           >
             <option value="">Select Project</option>
@@ -195,7 +227,7 @@ function ReportForm() {
                   className="form-control"
                   placeholder="Planned %"
                   value={newTask.planned_percent}
-                  onChange={(e) => setNewTask({ ...newTask, planned_percent: parseInt(e.target.value) })}
+                  onChange={(e) => setNewTask({ ...newTask, planned_percent: parseInt(e.target.value) || 0 })}
                 />
               </div>
               <div className="col-md-2">
@@ -204,7 +236,7 @@ function ReportForm() {
                   className="form-control"
                   placeholder="Actual %"
                   value={newTask.actual_percent}
-                  onChange={(e) => setNewTask({ ...newTask, actual_percent: parseInt(e.target.value) })}
+                  onChange={(e) => setNewTask({ ...newTask, actual_percent: parseInt(e.target.value) || 0 })}
                 />
               </div>
               <div className="col-md-3">
@@ -231,7 +263,7 @@ function ReportForm() {
                     {tasks.map((task, index) => (
                       <tr key={index}>
                         <td>{task.name}</td>
-                        <td><span className={`badge bg-${task.priority === 'HIGH' ? 'danger' : task.priority === 'MEDIUM' ? 'warning' : 'info'}`}>{task.priority}</span></td>
+                        <td><span className={`badge bg-${task.priority === 'HIGH' ? 'danger' : task.priority === 'MEDIUM' ? 'warning text-dark' : 'info'}`}>{task.priority}</span></td>
                         <td>{task.planned_percent}%</td>
                         <td>{task.actual_percent}%</td>
                         <td>
@@ -252,7 +284,7 @@ function ReportForm() {
 
         {/* Blockers */}
         <div className="mb-3">
-          <label className="form-label">Blockers</label>
+          <label className="form-label">Blockers (one per line)</label>
           <textarea
             className="form-control"
             rows="2"
@@ -270,7 +302,7 @@ function ReportForm() {
 
         {/* Achievements */}
         <div className="mb-3">
-          <label className="form-label">Achievements / Highlights</label>
+          <label className="form-label">Achievements (one per line)</label>
           <textarea
             className="form-control"
             rows="2"

@@ -20,10 +20,16 @@ function ReportList() {
 
   const submitMutation = useMutation({
     mutationFn: async (id) => {
-      await api.post(`/reports/${id}/submit/`);
+      const response = await api.post(`/reports/${id}/submit/`);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['reports']);
+      alert('✅ Report submitted successfully! Your manager will review it.');
+    },
+    onError: (error) => {
+      console.error('Submit error:', error);
+      alert('❌ Failed to submit report: ' + (error.response?.data?.error || 'Unknown error'));
     },
   });
 
@@ -38,7 +44,11 @@ function ReportList() {
   };
 
   const handleSubmit = async (id) => {
-    if (window.confirm('Submit this report for review?')) {
+    const report = reports?.find(r => r.id === id);
+    const message = report?.status === 'NEEDS_CORRECTION' 
+      ? 'Resubmit this report after making corrections?' 
+      : 'Submit this report for review?';
+    if (window.confirm(message)) {
       await submitMutation.mutateAsync(id);
     }
   };
@@ -98,11 +108,15 @@ function ReportList() {
                           <Link to={`/reports/${report.id}`} className="btn btn-outline-info">
                             View
                           </Link>
+                          
+                          {/* Edit - for DRAFT or NEEDS_CORRECTION */}
                           {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && (
                             <Link to={`/reports/${report.id}/edit`} className="btn btn-outline-primary">
                               Edit
                             </Link>
                           )}
+                          
+                          {/* Submit - for DRAFT only */}
                           {report.status === 'DRAFT' && (
                             <button 
                               onClick={() => handleSubmit(report.id)} 
@@ -112,11 +126,19 @@ function ReportList() {
                               Submit
                             </button>
                           )}
+                          
+                          {/* Resubmit - for NEEDS_CORRECTION only */}
                           {report.status === 'NEEDS_CORRECTION' && (
-                            <span className="badge bg-warning text-dark d-flex align-items-center">
-                              Needs Correction
-                            </span>
+                            <button 
+                              onClick={() => handleSubmit(report.id)} 
+                              className="btn btn-outline-warning"
+                              disabled={submitMutation.isLoading}
+                            >
+                              Resubmit
+                            </button>
                           )}
+                          
+                          {/* Review - for MANAGER only */}
                           {user?.role === 'MANAGER' && report.status === 'SUBMITTED' && (
                             <Link to={`/reports/${report.id}/review`} className="btn btn-outline-primary">
                               Review

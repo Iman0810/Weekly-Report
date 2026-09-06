@@ -39,6 +39,7 @@ function ReportDetail() {
   if (!report) return <div className="text-center mt-5">Report not found</div>;
 
   const isEditable = report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION';
+  const canResubmit = report.status === 'NEEDS_CORRECTION';
 
   return (
     <div className="container mt-4">
@@ -48,7 +49,7 @@ function ReportDetail() {
           <Link to="/reports" className="btn btn-secondary me-2">Back to Reports</Link>
           {isEditable && (
             <Link to={`/reports/${report.id}/edit`} className="btn btn-primary">
-              Edit Report
+              {canResubmit ? '✏️ Edit & Resubmit' : 'Edit Report'}
             </Link>
           )}
           {report.status === 'SUBMITTED' && user?.role === 'MANAGER' && (
@@ -63,13 +64,23 @@ function ReportDetail() {
       <div className="mb-3">
         <strong>Status: </strong>
         {getStatusBadge(report.status)}
+        {report.status === 'NEEDS_CORRECTION' && (
+          <span className="ms-2 text-warning">⚠️ Needs your attention</span>
+        )}
       </div>
 
-      {/* Manager Comment (if any) */}
+      {/* Manager Comment - More prominent for NEEDS_CORRECTION */}
       {report.manager_comment && (
-        <div className="alert alert-warning">
-          <strong>Manager's Feedback:</strong>
+        <div className={`alert ${report.status === 'NEEDS_CORRECTION' ? 'alert-warning' : 'alert-info'}`}>
+          <strong>{report.status === 'NEEDS_CORRECTION' ? '⚠️ Manager\'s Feedback:' : 'Manager\'s Comment:'}</strong>
           <p className="mb-0">{report.manager_comment}</p>
+          {report.status === 'NEEDS_CORRECTION' && (
+            <p className="mb-0 mt-2 small">
+              <Link to={`/reports/${report.id}/edit`} className="alert-link">
+                Click here to edit and resubmit
+              </Link>
+            </p>
+          )}
         </div>
       )}
 
