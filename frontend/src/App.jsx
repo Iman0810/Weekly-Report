@@ -8,8 +8,9 @@ import Register from './pages/Register';
 
 // Protected Pages
 import Dashboard from './pages/Dashboard';
+import ReportList from './pages/ReportList';
+import ReportForm from './pages/ReportForm';
 
-// Simple protected route wrapper
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
@@ -29,6 +30,21 @@ function App() {
       <Route path="/" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <ReportList />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports/new" element={
+        <ProtectedRoute>
+          <ReportForm />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports/:id/edit" element={
+        <ProtectedRoute>
+          <ReportForm />
         </ProtectedRoute>
       } />
     </Routes>
