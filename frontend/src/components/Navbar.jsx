@@ -1,21 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isDark, setIsDark] = useState(true);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+  };
+
   if (!user) return null;
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{ width: '100%' }}>
+      <div className="container-fluid px-4">  {/* Changed from container to container-fluid */}
         <Link className="navbar-brand fw-bold" to="/">
           📊 Weekly Report
         </Link>
@@ -37,11 +43,20 @@ function Navbar() {
             </li>
             {user?.role === 'MANAGER' && (
               <li className="nav-item">
-                <Link className="nav-link" to="/dashboard">Team Dashboard</Link>
+                <Link className="nav-link" to="/team-dashboard">Team Dashboard</Link>
               </li>
             )}
           </ul>
           <div className="d-flex align-items-center">
+            {/* Theme Toggle */}
+            <button 
+              onClick={toggleTheme}
+              className="btn btn-outline-light btn-sm me-3"
+              title="Toggle theme"
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
+            
             <span className="navbar-text text-light me-3">
               👤 {user.username} 
               <span className="badge bg-info ms-1 text-dark">

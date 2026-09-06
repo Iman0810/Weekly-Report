@@ -9,7 +9,7 @@ function ReportList() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
   
-  const { data: reports, isLoading, refetch } = useQuery({
+  const { data: reports, isLoading } = useQuery({
     queryKey: ['reports', statusFilter],
     queryFn: async () => {
       const params = statusFilter ? { status: statusFilter } : {};
@@ -40,7 +40,7 @@ function ReportList() {
       'NEEDS_CORRECTION': 'badge bg-warning text-dark',
       'APPROVED': 'badge bg-success',
     };
-    return <span className={classes[status] || 'badge bg-secondary'}>{status}</span>;
+    return <span className={`${classes[status] || 'badge bg-secondary'} px-3 py-2`}>{status}</span>;
   };
 
   const handleSubmit = async (id) => {
@@ -56,11 +56,15 @@ function ReportList() {
   if (isLoading) return <div className="text-center mt-5">Loading reports...</div>;
 
   return (
-    <div className="container mt-4">
+    <div>
+      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Reports</h2>
-        <Link to="/reports/new" className="btn btn-primary">
-          + New Report
+        <div>
+          <h1 className="display-6 fw-bold mb-0">📋 My Reports</h1>
+          <p className="text-muted mb-0">Manage and track your weekly reports</p>
+        </div>
+        <Link to="/reports/new" className="btn btn-primary btn-lg">
+          <span className="fw-bold">+</span> New Report
         </Link>
       </div>
 
@@ -72,76 +76,103 @@ function ReportList() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="DRAFT">Draft</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="NEEDS_CORRECTION">Needs Correction</option>
-            <option value="APPROVED">Approved</option>
+            <option value="">📊 All Statuses</option>
+            <option value="DRAFT">📝 Draft</option>
+            <option value="SUBMITTED">📤 Submitted</option>
+            <option value="NEEDS_CORRECTION">🔄 Needs Correction</option>
+            <option value="APPROVED">✅ Approved</option>
           </select>
+        </div>
+        <div className="col-md-8 text-end">
+          <span className="text-muted">
+            Total: <strong>{reports?.length || 0}</strong> reports
+          </span>
         </div>
       </div>
 
       {/* Reports Table */}
-      <div className="card">
+      <div className="card shadow-sm">
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Week</th>
-                  <th>Project</th>
-                  <th>Status</th>
-                  <th>Updated</th>
-                  <th>Actions</th>
+                  <th className="py-3">📅 Week</th>
+                  <th className="py-3">📁 Project</th>
+                  <th className="py-3">📌 Status</th>
+                  <th className="py-3">🕐 Updated</th>
+                  <th className="py-3 text-center">⚡ Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {reports && reports.length > 0 ? (
                   reports.map((report) => (
                     <tr key={report.id}>
-                      <td>{report.week_start} - {report.week_end}</td>
-                      <td>{report.project?.name || 'N/A'}</td>
-                      <td>{getStatusBadge(report.status)}</td>
-                      <td>{new Date(report.updated_at).toLocaleDateString()}</td>
-                      <td>
+                      <td className="align-middle">
+                        <strong>{report.week_start}</strong>
+                        <br />
+                        <small className="text-muted">→ {report.week_end}</small>
+                      </td>
+                      <td className="align-middle">
+                        {report.project?.name || <span className="text-muted">No project</span>}
+                      </td>
+                      <td className="align-middle">
+                        {getStatusBadge(report.status)}
+                      </td>
+                      <td className="align-middle">
+                        <small>{new Date(report.updated_at).toLocaleDateString()}</small>
+                        <br />
+                        <small className="text-muted">{new Date(report.updated_at).toLocaleTimeString()}</small>
+                      </td>
+                      <td className="align-middle text-center">
                         <div className="btn-group btn-group-sm">
-                          <Link to={`/reports/${report.id}`} className="btn btn-outline-info">
-                            View
+                          <Link 
+                            to={`/reports/${report.id}`} 
+                            className="btn btn-outline-info"
+                            title="View Report"
+                          >
+                            👁️
                           </Link>
                           
-                          {/* Edit - for DRAFT or NEEDS_CORRECTION */}
                           {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && (
-                            <Link to={`/reports/${report.id}/edit`} className="btn btn-outline-primary">
-                              Edit
+                            <Link 
+                              to={`/reports/${report.id}/edit`} 
+                              className="btn btn-outline-primary"
+                              title={report.status === 'NEEDS_CORRECTION' ? 'Edit & Resubmit' : 'Edit'}
+                            >
+                              ✏️
                             </Link>
                           )}
                           
-                          {/* Submit - for DRAFT only */}
                           {report.status === 'DRAFT' && (
                             <button 
                               onClick={() => handleSubmit(report.id)} 
                               className="btn btn-outline-success"
                               disabled={submitMutation.isLoading}
+                              title="Submit for Review"
                             >
-                              Submit
+                              📤
                             </button>
                           )}
                           
-                          {/* Resubmit - for NEEDS_CORRECTION only */}
                           {report.status === 'NEEDS_CORRECTION' && (
                             <button 
                               onClick={() => handleSubmit(report.id)} 
                               className="btn btn-outline-warning"
                               disabled={submitMutation.isLoading}
+                              title="Resubmit"
                             >
-                              Resubmit
+                              🔄
                             </button>
                           )}
                           
-                          {/* Review - for MANAGER only */}
                           {user?.role === 'MANAGER' && report.status === 'SUBMITTED' && (
-                            <Link to={`/reports/${report.id}/review`} className="btn btn-outline-primary">
-                              Review
+                            <Link 
+                              to={`/reports/${report.id}/review`} 
+                              className="btn btn-outline-primary"
+                              title="Review Report"
+                            >
+                              🔍
                             </Link>
                           )}
                         </div>
@@ -150,8 +181,11 @@ function ReportList() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center py-4 text-muted">
-                      No reports found. Create your first report!
+                    <td colSpan="5" className="text-center py-5">
+                      <div className="text-muted">
+                        <h5>📭 No reports found</h5>
+                        <p>Create your first report by clicking the <strong>"New Report"</strong> button above.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
