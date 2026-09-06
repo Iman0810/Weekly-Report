@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
 
 // Auth Pages
 import Login from './pages/Login';
@@ -13,54 +14,61 @@ import ReportForm from './pages/ReportForm';
 import ReportDetail from './pages/ReportDetail';
 import ReviewPage from './pages/ReviewPage';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
-
+  
   if (loading) return <div className="text-center mt-5">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  if (roles.length && !roles.includes(user.role)) return <Navigate to="/" />;
   return children;
 };
 
 function App() {
+  const { user } = useAuth();
+
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-
-      {/* Protected Routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports" element={
-        <ProtectedRoute>
-          <ReportList />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports/new" element={
-        <ProtectedRoute>
-          <ReportForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports/:id" element={
-        <ProtectedRoute>
-          <ReportDetail />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports/:id/edit" element={
-        <ProtectedRoute>
-          <ReportForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports/:id/review" element={
-        <ProtectedRoute roles={['MANAGER']}>
-          <ReviewPage />
-        </ProtectedRoute>
-      } />
-
-    </Routes>
+    <>
+      {user && <Navbar />}
+      <div className={user ? 'container mt-4' : ''}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Protected Routes */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <ReportList />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports/new" element={
+            <ProtectedRoute>
+              <ReportForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports/:id" element={
+            <ProtectedRoute>
+              <ReportDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports/:id/edit" element={
+            <ProtectedRoute>
+              <ReportForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports/:id/review" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <ReviewPage />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </div>
+    </>
   );
 }
 
