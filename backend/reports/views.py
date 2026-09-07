@@ -17,9 +17,18 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Managers see all projects
+        if user.role == 'MANAGER':
+            return Project.objects.all()
+        
+        # Team members only see projects they're assigned to
+        return Project.objects.filter(team_members=user)
 
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
