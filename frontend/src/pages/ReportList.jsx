@@ -8,7 +8,7 @@ function ReportList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
-  
+
   const { data: reports, isLoading } = useQuery({
     queryKey: ['reports', statusFilter],
     queryFn: async () => {
@@ -45,8 +45,8 @@ function ReportList() {
 
   const handleSubmit = async (id) => {
     const report = reports?.find(r => r.id === id);
-    const message = report?.status === 'NEEDS_CORRECTION' 
-      ? 'Resubmit this report after making corrections?' 
+    const message = report?.status === 'NEEDS_CORRECTION'
+      ? 'Resubmit this report after making corrections?'
       : 'Submit this report for review?';
     if (window.confirm(message)) {
       await submitMutation.mutateAsync(id);
@@ -71,7 +71,7 @@ function ReportList() {
       {/* Filters */}
       <div className="row mb-4">
         <div className="col-md-4">
-          <select 
+          <select
             className="form-select"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -97,6 +97,7 @@ function ReportList() {
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
+                  {user?.role === 'MANAGER' && <th className="py-3">👤 Team Member</th>}
                   <th className="py-3">📅 Week</th>
                   <th className="py-3">📁 Project</th>
                   <th className="py-3">📌 Status</th>
@@ -108,6 +109,13 @@ function ReportList() {
                 {reports && reports.length > 0 ? (
                   reports.map((report) => (
                     <tr key={report.id}>
+                      {user?.role === 'MANAGER' && (
+                        <td className="align-middle">
+                          <strong>{report.user?.username}</strong>
+                          <br />
+                          <small className="text-muted">{report.user?.email || ''}</small>
+                        </td>
+                      )}
                       <td className="align-middle">
                         <strong>{report.week_start}</strong>
                         <br />
@@ -126,27 +134,27 @@ function ReportList() {
                       </td>
                       <td className="align-middle text-center">
                         <div className="btn-group btn-group-sm">
-                          <Link 
-                            to={`/reports/${report.id}`} 
+                          <Link
+                            to={`/reports/${report.id}`}
                             className="btn btn-outline-info"
                             title="View Report"
                           >
                             👁️
                           </Link>
-                          
-                          {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && (
-                            <Link 
-                              to={`/reports/${report.id}/edit`} 
+
+                          {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && user?.role !== 'MANAGER' && (
+                            <Link
+                              to={`/reports/${report.id}/edit`}
                               className="btn btn-outline-primary"
                               title={report.status === 'NEEDS_CORRECTION' ? 'Edit & Resubmit' : 'Edit'}
                             >
                               ✏️
                             </Link>
                           )}
-                          
-                          {report.status === 'DRAFT' && (
-                            <button 
-                              onClick={() => handleSubmit(report.id)} 
+
+                          {report.status === 'DRAFT' && user?.role !== 'MANAGER' && (
+                            <button
+                              onClick={() => handleSubmit(report.id)}
                               className="btn btn-outline-success"
                               disabled={submitMutation.isLoading}
                               title="Submit for Review"
@@ -154,10 +162,10 @@ function ReportList() {
                               📤
                             </button>
                           )}
-                          
-                          {report.status === 'NEEDS_CORRECTION' && (
-                            <button 
-                              onClick={() => handleSubmit(report.id)} 
+
+                          {report.status === 'NEEDS_CORRECTION' && user?.role !== 'MANAGER' && (
+                            <button
+                              onClick={() => handleSubmit(report.id)}
                               className="btn btn-outline-warning"
                               disabled={submitMutation.isLoading}
                               title="Resubmit"
@@ -165,10 +173,10 @@ function ReportList() {
                               🔄
                             </button>
                           )}
-                          
+
                           {user?.role === 'MANAGER' && report.status === 'SUBMITTED' && (
-                            <Link 
-                              to={`/reports/${report.id}/review`} 
+                            <Link
+                              to={`/reports/${report.id}/review`}
                               className="btn btn-outline-primary"
                               title="Review Report"
                             >

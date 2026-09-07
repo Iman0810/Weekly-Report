@@ -67,19 +67,22 @@ function ReportForm() {
     }
   }, [report]);
 
-  const mutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = {
-        week_start: data.week_start,
-        week_end: data.week_end,
-        project: data.project ? data.project.id : null,
-        tasks: data.tasks,
-        blockers: data.blockers,
-        achievements: data.achievements,
-        hours_worked: data.hours_worked,
-        notes: data.notes,
-      };
-      
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    // Make sure project is sent as ID only
+    const payload = {
+      week_start: data.week_start,
+      week_end: data.week_end,
+      project: data.project?.id || null,  // Send just the ID, or null
+      tasks: data.tasks || [],
+      blockers: data.blockers || [],
+      achievements: data.achievements || [],
+      hours_worked: data.hours_worked || {},
+      notes: data.notes || '',
+    };
+    
+    console.log('Sending payload:', payload);  // Debug - check console
+    
       if (isEditing) {
         // If report was "NEEDS_CORRECTION", change status to "DRAFT" on edit
         if (report?.status === 'NEEDS_CORRECTION') {
