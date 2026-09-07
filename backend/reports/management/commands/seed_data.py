@@ -45,16 +45,24 @@ class Command(BaseCommand):
             manager.save()
             self.stdout.write('✅ Created manager user')
         
-        # Create projects
+        # Create projects with team members
+        projects_data = [
+            {'name': 'Client A', 'description': 'Main client project', 'members': users[:2]},
+            {'name': 'Internal Tooling', 'description': 'Building internal tools', 'members': users[2:4]},
+            {'name': 'R&D', 'description': 'Research and development', 'members': [users[0], users[3]]},
+            {'name': 'Marketing', 'description': 'Marketing campaigns', 'members': [users[1], users[4]]},
+            {'name': 'Support', 'description': 'Customer support', 'members': users[2:5]},
+        ]
+        
         projects = []
-        project_names = ['Client A', 'Internal Tooling', 'R&D', 'Marketing', 'Support']
-        for name in project_names:
+        for data in projects_data:
             project, created = Project.objects.get_or_create(
-                name=name,
-                defaults={'description': f'Project for {name}'}
+                name=data['name'],
+                defaults={'description': data['description']}
             )
             if created:
-                self.stdout.write(f'✅ Created project: {name}')
+                project.team_members.set(data['members'])
+                self.stdout.write(f'✅ Created project: {data["name"]} with {len(data["members"])} members')
             projects.append(project)
         
         # Create reports for each user
@@ -66,10 +74,12 @@ class Command(BaseCommand):
         
         report_count = 0
         for user in users:
+            # Get projects assigned to this user
+            user_projects = Project.objects.filter(team_members=user)
+            
             for idx, week_start in enumerate(weeks):
                 week_end = week_start + timedelta(days=6)
                 
-                # Assign different statuses to make it interesting
                 if idx == 0:
                     status = 'SUBMITTED'
                 elif idx == 1:
@@ -79,12 +89,15 @@ class Command(BaseCommand):
                 else:
                     status = random.choice(statuses)
                 
+                # Pick a project this user is assigned to, or None
+                project = random.choice(user_projects) if user_projects.exists() else None
+                
                 report, created = Report.objects.get_or_create(
                     user=user,
                     week_start=week_start,
                     defaults={
                         'week_end': week_end,
-                        'project': random.choice(projects),
+                        'project': project,
                         'status': status,
                         'tasks': [
                             {

@@ -14,6 +14,12 @@ class User(AbstractUser):
 class Project(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    team_members = models.ManyToManyField(
+        User,
+        related_name='assigned_projects',
+        blank=True,
+        limit_choices_to={'role': 'TEAM_MEMBER'}
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
