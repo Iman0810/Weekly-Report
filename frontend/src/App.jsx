@@ -13,6 +13,7 @@ import ReportList from './pages/ReportList';
 import ReportForm from './pages/ReportForm';
 import ReportDetail from './pages/ReportDetail';
 import ReviewPage from './pages/ReviewPage';
+import TeamDashboard from './pages/TeamDashboard';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
@@ -64,6 +65,11 @@ function App() {
           <Route path="/reports/:id/review" element={
             <ProtectedRoute roles={['MANAGER']}>
               <ReviewPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/team-dashboard" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <TeamDashboard />
             </ProtectedRoute>
           } />
         </Routes>

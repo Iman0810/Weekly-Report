@@ -25,10 +25,10 @@ function Navbar() {
         <Link className="navbar-brand fw-bold" to="/">
           📊 Weekly Report
         </Link>
-        <button 
-          className="navbar-toggler" 
-          type="button" 
-          data-bs-toggle="collapse" 
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
         >
           <span className="navbar-toggler-icon"></span>
@@ -49,22 +49,22 @@ function Navbar() {
           </ul>
           <div className="d-flex align-items-center">
             {/* Theme Toggle */}
-            <button 
+            <button
               onClick={toggleTheme}
               className="btn btn-outline-light btn-sm me-3"
               title="Toggle theme"
             >
               {isDark ? '☀️' : '🌙'}
             </button>
-            
+
             <span className="navbar-text text-light me-3">
-              👤 {user.username} 
+              👤 {user.username}
               <span className="badge bg-info ms-1 text-dark">
                 {user.role === 'MANAGER' ? 'Manager' : 'Team Member'}
               </span>
             </span>
-            <button 
-              onClick={handleLogout} 
+            <button
+              onClick={handleLogout}
               className="btn btn-outline-light btn-sm"
             >
               Logout
