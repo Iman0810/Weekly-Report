@@ -27,9 +27,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 class ProjectSerializer(serializers.ModelSerializer):
+    team_members = UserSerializer(many=True, read_only=True)
+    team_member_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        write_only=True,
+        source='team_members',
+        queryset=User.objects.filter(role='TEAM_MEMBER'),
+        required=False
+    )
+    
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'team_members', 'team_member_ids', 'created_at']
 
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
