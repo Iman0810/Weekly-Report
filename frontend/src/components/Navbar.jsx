@@ -42,9 +42,14 @@ function Navbar() {
               <Link className="nav-link" to="/reports">My Reports</Link>
             </li>
             {user?.role === 'MANAGER' && (
-              <li className="nav-item">
-                <Link className="nav-link" to="/team-dashboard">Team Dashboard</Link>
-              </li>
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/team-dashboard">Team Dashboard</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/projects">📁 Projects</Link>
+                </li>
+              </>
             )}
           </ul>
           <div className="d-flex align-items-center">

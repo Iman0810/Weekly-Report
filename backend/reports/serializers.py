@@ -28,18 +28,36 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     team_members = UserSerializer(many=True, read_only=True)
-    team_member_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
+    team_member_ids = serializers.ListField(
+        child=serializers.IntegerField(),
         write_only=True,
-        source='team_members',
-        queryset=User.objects.filter(role='TEAM_MEMBER'),
         required=False
     )
     
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'team_members', 'team_member_ids', 'created_at']
-
+    
+    def create(self, validated_data):
+        team_member_ids = validated_data.pop('team_member_ids', [])
+        project = Project.objects.create(**validated_data)
+        if team_member_ids:
+            project.team_members.set(User.objects.filter(id__in=team_member_ids))
+        return project
+    
+    def update(self, instance, validated_data):
+        team_member_ids = validated_data.pop('team_member_ids', None)
+        
+        # Update fields
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        
+        # Update team members if provided
+        if team_member_ids is not None:
+            instance.team_members.set(User.objects.filter(id__in=team_member_ids))
+        
+        return instance
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     

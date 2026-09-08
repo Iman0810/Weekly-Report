@@ -14,10 +14,11 @@ import ReportForm from './pages/ReportForm';
 import ReportDetail from './pages/ReportDetail';
 import ReviewPage from './pages/ReviewPage';
 import TeamDashboard from './pages/TeamDashboard';
+import ProjectPage from './pages/ProjectsPage';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) return <div className="text-center mt-5">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   if (roles.length && !roles.includes(user.role)) return <Navigate to="/" />;
@@ -35,7 +36,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+
           {/* Protected Routes */}
           <Route path="/" element={
             <ProtectedRoute>
@@ -70,6 +71,11 @@ function App() {
           <Route path="/team-dashboard" element={
             <ProtectedRoute roles={['MANAGER']}>
               <TeamDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <ProjectsPage />
             </ProtectedRoute>
           } />
         </Routes>

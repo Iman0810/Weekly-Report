@@ -7,23 +7,23 @@ function TeamDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
 
-  // Fetch all reports
-  const { data: reports, isLoading } = useQuery({
+  // Fetch all users (team members only for filter)
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await api.get('/users/');
+      return response.data.results || response.data;
+    },
+  });
+
+  // Fetch all reports with filters
+  const { data: reports, isLoading, refetch } = useQuery({
     queryKey: ['reports', 'all', statusFilter, userFilter],
     queryFn: async () => {
       const params = {};
       if (statusFilter) params.status = statusFilter;
       if (userFilter) params.user_id = userFilter;
       const response = await api.get('/reports/', { params });
-      return response.data.results || response.data;
-    },
-  });
-
-  // Fetch all users
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await api.get('/users/');
       return response.data.results || response.data;
     },
   });
@@ -46,6 +46,9 @@ function TeamDashboard() {
     };
     return <span className={`${classes[status] || 'badge bg-secondary'} px-3 py-2`}>{status}</span>;
   };
+
+  // Get team members only
+  const teamMembers = users?.filter(u => u.role === 'TEAM_MEMBER') || [];
 
   if (isLoading) return <div className="text-center mt-5">Loading dashboard...</div>;
 
@@ -114,9 +117,9 @@ function TeamDashboard() {
             onChange={(e) => setUserFilter(e.target.value)}
           >
             <option value="">👥 All Team Members</option>
-            {users?.filter(u => u.role === 'TEAM_MEMBER').map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.username}
+            {teamMembers.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.username} ({member.email || 'no email'})
               </option>
             ))}
           </select>

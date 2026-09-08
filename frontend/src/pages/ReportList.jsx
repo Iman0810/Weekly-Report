@@ -63,9 +63,11 @@ function ReportList() {
           <h1 className="display-6 fw-bold mb-0">📋 My Reports</h1>
           <p className="text-muted mb-0">Manage and track your weekly reports</p>
         </div>
-        <Link to="/reports/new" className="btn btn-primary btn-lg">
-          <span className="fw-bold">+</span> New Report
-        </Link>
+        {user?.role === 'TEAM_MEMBER' && (
+          <Link to="/reports/new" className="btn btn-primary btn-lg">
+            <span className="fw-bold">+</span> New Report
+          </Link>
+        )}
       </div>
 
       {/* Filters */}
