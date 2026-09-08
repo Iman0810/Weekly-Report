@@ -14,7 +14,7 @@ import ReportForm from './pages/ReportForm';
 import ReportDetail from './pages/ReportDetail';
 import ReviewPage from './pages/ReviewPage';
 import TeamDashboard from './pages/TeamDashboard';
-import ProjectPage from './pages/ProjectsPage';
+import ProjectsPage from './pages/ProjectsPage';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
