@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import Charts from '../components/Charts';
 
 function TeamDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
@@ -17,7 +18,7 @@ function TeamDashboard() {
   });
 
   // Fetch all reports with filters
-  const { data: reports, isLoading, refetch } = useQuery({
+  const { data: reports, isLoading } = useQuery({
     queryKey: ['reports', 'all', statusFilter, userFilter],
     queryFn: async () => {
       const params = {};
@@ -36,6 +37,20 @@ function TeamDashboard() {
       return response.data;
     },
   });
+
+  // Calculate hours by task type from reports
+  const hoursData = React.useMemo(() => {
+    if (!reports) return {};
+    const hours = {};
+    reports.forEach(report => {
+      if (report.hours_worked) {
+        Object.entries(report.hours_worked).forEach(([type, value]) => {
+          hours[type] = (hours[type] || 0) + value;
+        });
+      }
+    });
+    return hours;
+  }, [reports]);
 
   const getStatusBadge = (status) => {
     const classes = {
@@ -92,6 +107,14 @@ function TeamDashboard() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Charts Section */}
+      {stats && reports && reports.length > 0 && (
+        <div className="mb-4">
+          <h4 className="mb-3">📈 Visual Insights</h4>
+          <Charts reports={reports} stats={stats} hoursData={hoursData} />
         </div>
       )}
 

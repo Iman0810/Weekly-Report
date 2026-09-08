@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import Charts from '../components/Charts';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -17,6 +18,26 @@ function Dashboard() {
     enabled: !!user,
   });
 
+  // Fetch stats (for charts)
+  const { data: stats } = useQuery({
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const response = await api.get('/reports/stats/');
+      return response.data;
+    },
+    enabled: user?.role === 'MANAGER',
+  });
+
+  // Fetch all reports for hours calculation (managers only)
+  const { data: allReports } = useQuery({
+    queryKey: ['reports', 'all'],
+    queryFn: async () => {
+      const response = await api.get('/reports/');
+      return response.data.results || response.data;
+    },
+    enabled: user?.role === 'MANAGER',
+  });
+
   // Fetch recent reports
   const { data: reports } = useQuery({
     queryKey: ['reports', 'recent'],
@@ -25,6 +46,20 @@ function Dashboard() {
       return response.data.results || response.data;
     },
   });
+
+  // Calculate hours by task type from all reports
+  const hoursData = React.useMemo(() => {
+    if (!allReports) return {};
+    const hours = {};
+    allReports.forEach(report => {
+      if (report.hours_worked) {
+        Object.entries(report.hours_worked).forEach(([type, value]) => {
+          hours[type] = (hours[type] || 0) + value;
+        });
+      }
+    });
+    return hours;
+  }, [allReports]);
 
   const getStatusBadge = (status) => {
     const classes = {
@@ -85,7 +120,8 @@ function Dashboard() {
               </div>
               <div className="card-body">
                 <p className="mb-2">Total Projects: <strong>{projects?.length || 0}</strong></p>
-                <p className="mb-0">Team Members: <strong>5</strong></p>
+                <p className="mb-2">Team Members: <strong>{stats?.team_members || 5}</strong></p>
+                <p className="mb-0">Total Reports: <strong>{stats?.total_reports || 0}</strong></p>
               </div>
             </div>
           </div>
@@ -115,6 +151,9 @@ function Dashboard() {
                     <Link to="/projects" className="btn btn-outline-info">
                       📁 Manage Projects
                     </Link>
+                    <Link to="/users" className="btn btn-outline-secondary">
+                      👥 Manage Users
+                    </Link>
                   </>
                 )}
               </div>
@@ -123,8 +162,16 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Charts Section - Only for Managers */}
+      {user?.role === 'MANAGER' && stats && (
+        <div className="mt-4">
+          <h4 className="mb-3">📈 Visual Insights</h4>
+          <Charts reports={allReports} stats={stats} hoursData={hoursData} />
+        </div>
+      )}
+
       {/* Recent Reports */}
-      <div className="card shadow-sm">
+      <div className="card shadow-sm mt-4">
         <div className="card-header">
           <h5 className="mb-0">📋 Recent Reports</h5>
         </div>

@@ -73,7 +73,7 @@ const mutation = useMutation({
     const payload = {
       week_start: data.week_start,
       week_end: data.week_end,
-      project: data.project?.id || null,  // Send just the ID, or null
+      project_id: data.project?.id || null,  // Send just the ID, or null
       tasks: data.tasks || [],
       blockers: data.blockers || [],
       achievements: data.achievements || [],

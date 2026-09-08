@@ -60,9 +60,22 @@ class ProjectSerializer(serializers.ModelSerializer):
         return instance
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    project = ProjectSerializer(read_only=True)  # ← This should already be there
+    project = ProjectSerializer(read_only=True)  # For reading
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        source='project',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     
     class Meta:
         model = Report
-        fields = '__all__'
+        fields = [
+            'id', 'user', 'project', 'project_id', 
+            'week_start', 'week_end', 'status',
+            'tasks', 'blockers', 'achievements', 'hours_worked', 'notes',
+            'manager_comment', 'version', 'version_history',
+            'created_at', 'updated_at'
+        ]
         read_only_fields = ['user', 'version', 'version_history', 'created_at', 'updated_at']
