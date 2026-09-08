@@ -27,9 +27,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if user.role == 'MANAGER':
             return Project.objects.all()
         
-        # Team members only see projects they're assigned to
-        return Project.objects.filter(team_members=user)
-
+        # Team members see projects they're assigned to OR all projects (if none assigned)
+        user_projects = Project.objects.filter(team_members=user)
+        if user_projects.exists():
+            return user_projects
+        # If no projects assigned, show all projects (or empty)
+        return Project.objects.none()  # Or return Project.objects.all() if you prefer
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
@@ -139,3 +142,16 @@ class ReportViewSet(viewsets.ModelViewSet):
             'approved': Report.objects.filter(status='APPROVED').count(),
             'draft': Report.objects.filter(status='DRAFT').count(),
         })
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for viewing users (read-only for managers)
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        # Managers can see all users, team members can only see themselves
+        if self.request.user.role == 'MANAGER':
+            return User.objects.all()
+        return User.objects.filter(id=self.request.user.id)

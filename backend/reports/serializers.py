@@ -60,6 +60,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         return instance
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    project = ProjectSerializer(read_only=True)  # ← This should already be there
     
     class Meta:
         model = Report

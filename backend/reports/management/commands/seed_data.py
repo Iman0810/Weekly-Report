@@ -53,7 +53,7 @@ class Command(BaseCommand):
             {'name': 'Marketing', 'description': 'Marketing campaigns', 'members': [users[1], users[4]]},
             {'name': 'Support', 'description': 'Customer support', 'members': users[2:5]},
         ]
-        
+
         projects = []
         for data in projects_data:
             project, created = Project.objects.get_or_create(
