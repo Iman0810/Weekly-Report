@@ -49,6 +49,9 @@ function Navbar() {
                 <li className="nav-item">
                   <Link className="nav-link" to="/projects">📁 Projects</Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/users">👥 Users</Link>
+                </li>
               </>
             )}
           </ul>

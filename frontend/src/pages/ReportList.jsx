@@ -14,9 +14,13 @@ function ReportList() {
     queryFn: async () => {
       const params = statusFilter ? { status: statusFilter } : {};
       const response = await api.get('/reports/', { params });
+
+      console.log('Fetched reports:', response.data.results || response.data);
       return response.data.results || response.data;
+      
     },
   });
+  console.log('Reports data:', reports);
 
   const submitMutation = useMutation({
     mutationFn: async (id) => {

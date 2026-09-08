@@ -15,6 +15,7 @@ import ReportDetail from './pages/ReportDetail';
 import ReviewPage from './pages/ReviewPage';
 import TeamDashboard from './pages/TeamDashboard';
 import ProjectsPage from './pages/ProjectsPage';
+import UserManagement from './pages/UserManagement';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { user, loading } = useAuth();
@@ -76,6 +77,11 @@ function App() {
           <Route path="/projects" element={
             <ProtectedRoute roles={['MANAGER']}>
               <ProjectsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/users" element={
+            <ProtectedRoute roles={['MANAGER']}>
+              <UserManagement />
             </ProtectedRoute>
           } />
         </Routes>

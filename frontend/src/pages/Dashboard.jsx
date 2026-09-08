@@ -1,31 +1,166 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 function Dashboard() {
   const { user, logout } = useAuth();
 
+  // Fetch user's projects (team members) or all projects (managers)
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const response = await api.get('/projects/');
+      return response.data.results || response.data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch recent reports
+  const { data: reports } = useQuery({
+    queryKey: ['reports', 'recent'],
+    queryFn: async () => {
+      const response = await api.get('/reports/?page_size=5');
+      return response.data.results || response.data;
+    },
+  });
+
+  const getStatusBadge = (status) => {
+    const classes = {
+      'DRAFT': 'badge bg-secondary',
+      'SUBMITTED': 'badge bg-primary',
+      'NEEDS_CORRECTION': 'badge bg-warning text-dark',
+      'APPROVED': 'badge bg-success',
+    };
+    return <span className={`${classes[status] || 'badge bg-secondary'} px-2 py-1`}>{status}</span>;
+  };
+
   return (
-    <div className="container mt-4">
-      <div className="card">
-        <div className="card-body">
-          <h2>Welcome, {user?.username || 'User'}!</h2>
-          <p className="text-muted">Role: {user?.role || 'Unknown'}</p>
-          
-          <div className="mt-4">
-            <h5>Quick Actions</h5>
-            <div className="d-flex gap-2 flex-wrap">
-              <Link to="/reports" className="btn btn-primary">View Reports</Link>
-              <Link to="/reports/new" className="btn btn-success">Create Report</Link>
-              <button onClick={logout} className="btn btn-danger">Logout</button>
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="display-6 fw-bold mb-0">👋 Welcome, {user?.username}!</h1>
+          <p className="text-muted mb-0">Role: {user?.role === 'MANAGER' ? 'Manager' : 'Team Member'}</p>
+        </div>
+        <div>
+          <button onClick={logout} className="btn btn-outline-danger">Logout</button>
+        </div>
+      </div>
+
+      <div className="row">
+        {/* My Projects - For Team Members */}
+        {user?.role === 'TEAM_MEMBER' && (
+          <div className="col-md-4 mb-4">
+            <div className="card shadow-sm h-100">
+              <div className="card-header">
+                <h5 className="mb-0">📁 My Projects</h5>
+              </div>
+              <div className="card-body">
+                {projects && projects.length > 0 ? (
+                  <ul className="list-unstyled mb-0">
+                    {projects.map((project) => (
+                      <li key={project.id} className="mb-2">
+                        <span className="badge bg-primary me-2">✓</span>
+                        <strong>{project.name}</strong>
+                        <br />
+                        <small className="text-muted">{project.description || 'No description'}</small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted mb-0">No projects assigned yet. Contact your manager.</p>
+                )}
+              </div>
             </div>
           </div>
-          
-          <div className="mt-4 p-3 bg-light rounded">
-            <p className="mb-0 text-muted small">
-              ✅ Connected to Django backend at http://localhost:8000
-            </p>
+        )}
+
+        {/* Manager Quick Stats */}
+        {user?.role === 'MANAGER' && (
+          <div className="col-md-4 mb-4">
+            <div className="card shadow-sm h-100">
+              <div className="card-header">
+                <h5 className="mb-0">📊 Quick Stats</h5>
+              </div>
+              <div className="card-body">
+                <p className="mb-2">Total Projects: <strong>{projects?.length || 0}</strong></p>
+                <p className="mb-0">Team Members: <strong>5</strong></p>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className={`col-md-${user?.role === 'TEAM_MEMBER' ? '8' : '8'} mb-4`}>
+          <div className="card shadow-sm h-100">
+            <div className="card-header">
+              <h5 className="mb-0">⚡ Quick Actions</h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex gap-2 flex-wrap">
+                {user?.role === 'TEAM_MEMBER' && (
+                  <Link to="/reports/new" className="btn btn-primary">
+                    📝 Create Report
+                  </Link>
+                )}
+                <Link to="/reports" className="btn btn-outline-primary">
+                  📋 View Reports
+                </Link>
+                {user?.role === 'MANAGER' && (
+                  <>
+                    <Link to="/team-dashboard" className="btn btn-outline-success">
+                      📊 Team Dashboard
+                    </Link>
+                    <Link to="/projects" className="btn btn-outline-info">
+                      📁 Manage Projects
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Reports */}
+      <div className="card shadow-sm">
+        <div className="card-header">
+          <h5 className="mb-0">📋 Recent Reports</h5>
+        </div>
+        <div className="card-body p-0">
+          {reports && reports.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-hover mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>User</th>
+                    <th>Week</th>
+                    <th>Project</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((report) => (
+                    <tr key={report.id}>
+                      <td>{report.user?.username}</td>
+                      <td>{report.week_start} → {report.week_end}</td>
+                      <td>{report.project?.name || 'No project'}</td>
+                      <td>{getStatusBadge(report.status)}</td>
+                      <td>
+                        <Link to={`/reports/${report.id}`} className="btn btn-sm btn-outline-info">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-muted">No reports yet.</div>
+          )}
         </div>
       </div>
     </div>

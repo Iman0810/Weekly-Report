@@ -143,15 +143,30 @@ class ReportViewSet(viewsets.ModelViewSet):
             'draft': Report.objects.filter(status='DRAFT').count(),
         })
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):  # Change from ReadOnlyModelViewSet to ModelViewSet
     """
-    ViewSet for viewing users (read-only for managers)
+    ViewSet for managing users (only for managers)
     """
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
     
     def get_queryset(self):
-        # Managers can see all users, team members can only see themselves
         if self.request.user.role == 'MANAGER':
             return User.objects.all()
         return User.objects.filter(id=self.request.user.id)
+    
+    def destroy(self, request, *args, **kwargs):
+        # Only managers can delete users
+        if request.user.role != 'MANAGER':
+            return Response(
+                {'error': 'Only managers can delete users'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        # Prevent deleting self
+        user = self.get_object()
+        if user.id == request.user.id:
+            return Response(
+                {'error': 'You cannot delete yourself'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
