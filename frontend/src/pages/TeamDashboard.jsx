@@ -7,6 +7,7 @@ import Charts from '../components/Charts';
 function TeamDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [weekFilter, setWeekFilter] = useState('');
 
   // Fetch all users (team members only for filter)
   const { data: users } = useQuery({
@@ -19,11 +20,12 @@ function TeamDashboard() {
 
   // Fetch all reports with filters
   const { data: reports, isLoading } = useQuery({
-    queryKey: ['reports', 'all', statusFilter, userFilter],
+    queryKey: ['reports', 'all', statusFilter, userFilter, weekFilter],
     queryFn: async () => {
       const params = {};
       if (statusFilter) params.status = statusFilter;
       if (userFilter) params.user_id = userFilter;
+      if (weekFilter) params.week_start = weekFilter;
       const response = await api.get('/reports/', { params });
       return response.data.results || response.data;
     },
@@ -64,6 +66,25 @@ function TeamDashboard() {
 
   // Get team members only
   const teamMembers = users?.filter(u => u.role === 'TEAM_MEMBER') || [];
+
+  // Track submission status per team member
+  const memberStatus = React.useMemo(() => {
+    return teamMembers.map(member => {
+      const memberReports = reports?.filter(r => r.user?.id === member.id) || [];
+      const hasSubmitted = memberReports.some(r => 
+        r.status === 'SUBMITTED' || r.status === 'APPROVED'
+      );
+      const hasDraft = memberReports.some(r => r.status === 'DRAFT');
+      const needsCorrection = memberReports.some(r => r.status === 'NEEDS_CORRECTION');
+      
+      let status = 'NOT_STARTED';
+      if (needsCorrection) status = 'NEEDS_CORRECTION';
+      else if (hasSubmitted) status = 'SUBMITTED';
+      else if (hasDraft) status = 'IN_PROGRESS';
+      
+      return { ...member, status, reportCount: memberReports.length };
+    });
+  }, [teamMembers, reports]);
 
   if (isLoading) return <div className="text-center mt-5">Loading dashboard...</div>;
 
@@ -110,6 +131,37 @@ function TeamDashboard() {
         </div>
       )}
 
+      {/* Team Member Status Summary */}
+      <div className="row mb-4">
+        <div className="col-md-4">
+          <div className="card bg-success text-white shadow-sm">
+            <div className="card-body">
+              <h6 className="card-title">✅ Submitted</h6>
+              <h2 className="mb-0">{memberStatus.filter(m => m.status === 'SUBMITTED').length}</h2>
+              <small>Have submitted reports</small>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4">
+          <div className="card bg-warning text-dark shadow-sm">
+            <div className="card-body">
+              <h6 className="card-title">🔄 In Progress</h6>
+              <h2 className="mb-0">{memberStatus.filter(m => m.status === 'IN_PROGRESS').length}</h2>
+              <small>Have drafts but not submitted</small>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4">
+          <div className="card bg-secondary text-white shadow-sm">
+            <div className="card-body">
+              <h6 className="card-title">⏳ Not Started</h6>
+              <h2 className="mb-0">{memberStatus.filter(m => m.status === 'NOT_STARTED').length}</h2>
+              <small>No reports this week</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Charts Section */}
       {stats && reports && reports.length > 0 && (
         <div className="mb-4">
@@ -120,7 +172,7 @@ function TeamDashboard() {
 
       {/* Filters */}
       <div className="row mb-4">
-        <div className="col-md-4">
+        <div className="col-md-3">
           <select
             className="form-select"
             value={statusFilter}
@@ -133,7 +185,7 @@ function TeamDashboard() {
             <option value="APPROVED">✅ Approved</option>
           </select>
         </div>
-        <div className="col-md-4">
+        <div className="col-md-3">
           <select
             className="form-select"
             value={userFilter}
@@ -147,7 +199,16 @@ function TeamDashboard() {
             ))}
           </select>
         </div>
-        <div className="col-md-4 text-end">
+        <div className="col-md-3">
+          <input
+            type="week"
+            className="form-control"
+            value={weekFilter}
+            onChange={(e) => setWeekFilter(e.target.value)}
+            placeholder="Filter by week"
+          />
+        </div>
+        <div className="col-md-3 text-end">
           <span className="text-muted">
             Showing: <strong>{reports?.length || 0}</strong> reports
           </span>
@@ -174,7 +235,9 @@ function TeamDashboard() {
                   reports.map((report) => (
                     <tr key={report.id}>
                       <td className="align-middle">
-                        <strong>{report.user?.username}</strong>
+                        <Link to={`/team-member/${report.user?.id}`} className="text-decoration-none">
+                          <strong>{report.user?.username}</strong>
+                        </Link>
                         <br />
                         <small className="text-muted">{report.user?.email || ''}</small>
                       </td>

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Charts from '../components/Charts';
+import ActivityFeed from '../components/ActivityFeed';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -111,24 +112,76 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Manager Quick Stats */}
-        {user?.role === 'MANAGER' && (
-          <div className="col-md-4 mb-4">
-            <div className="card shadow-sm h-100">
-              <div className="card-header">
-                <h5 className="mb-0">📊 Quick Stats</h5>
-              </div>
-              <div className="card-body">
-                <p className="mb-2">Total Projects: <strong>{projects?.length || 0}</strong></p>
-                <p className="mb-2">Team Members: <strong>{stats?.team_members || 5}</strong></p>
-                <p className="mb-0">Total Reports: <strong>{stats?.total_reports || 0}</strong></p>
+        {/* Manager Stats Cards */}
+        {user?.role === 'MANAGER' && stats && (
+          <>
+            <div className="col-md-3 mb-4">
+              <div className="card bg-primary text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">Total Reports</h6>
+                  <h2 className="mb-0">{stats.total_reports}</h2>
+                </div>
               </div>
             </div>
-          </div>
+            <div className="col-md-3 mb-4">
+              <div className="card bg-warning text-dark shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">Needs Correction</h6>
+                  <h2 className="mb-0">{stats.needs_correction}</h2>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3 mb-4">
+              <div className="card bg-success text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">Approved</h6>
+                  <h2 className="mb-0">{stats.approved}</h2>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3 mb-4">
+              <div className="card bg-info text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">Compliance Rate</h6>
+                  <h2 className="mb-0">{stats.compliance_rate}%</h2>
+                  <small>Submitted this week</small>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Metrics Row */}
+            <div className="col-md-4 mb-4">
+              <div className="card bg-secondary text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">📤 Submitted This Week</h6>
+                  <h2 className="mb-0">{stats.submitted_this_week}</h2>
+                  <small>Out of {stats.total_members} team members</small>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4 mb-4">
+              <div className="card bg-danger text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">🚧 Open Blockers</h6>
+                  <h2 className="mb-0">{stats.open_blockers}</h2>
+                  <small>Key issues across the team</small>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4 mb-4">
+              <div className="card bg-dark text-white shadow-sm">
+                <div className="card-body">
+                  <h6 className="card-title">⏳ Not Started</h6>
+                  <h2 className="mb-0">{stats.not_started_users || 0}</h2>
+                  <small>No report for this week</small>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Quick Actions */}
-        <div className={`col-md-${user?.role === 'TEAM_MEMBER' ? '8' : '8'} mb-4`}>
+        <div className={`col-md-${user?.role === 'TEAM_MEMBER' ? '8' : '12'} mb-4`}>
           <div className="card shadow-sm h-100">
             <div className="card-header">
               <h5 className="mb-0">⚡ Quick Actions</h5>
@@ -167,6 +220,13 @@ function Dashboard() {
         <div className="mt-4">
           <h4 className="mb-3">📈 Visual Insights</h4>
           <Charts reports={allReports} stats={stats} hoursData={hoursData} />
+        </div>
+      )}
+
+      {/* Activity Feed - Only for Managers */}
+      {user?.role === 'MANAGER' && (
+        <div className="mt-4">
+          <ActivityFeed />
         </div>
       )}
 

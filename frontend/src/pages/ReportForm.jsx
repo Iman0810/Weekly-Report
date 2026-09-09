@@ -67,24 +67,22 @@ function ReportForm() {
     }
   }, [report]);
 
-const mutation = useMutation({
-  mutationFn: async (data) => {
-    // Make sure project is sent as ID only
-    const payload = {
-      week_start: data.week_start,
-      week_end: data.week_end,
-      project_id: data.project?.id || null,  // Send just the ID, or null
-      tasks: data.tasks || [],
-      blockers: data.blockers || [],
-      achievements: data.achievements || [],
-      hours_worked: data.hours_worked || {},
-      notes: data.notes || '',
-    };
-    
-    console.log('Sending payload:', payload);  // Debug - check console
-    
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      const payload = {
+        week_start: data.week_start,
+        week_end: data.week_end,
+        project_id: data.project?.id || null,
+        tasks: data.tasks || [],
+        blockers: data.blockers || [],
+        achievements: data.achievements || [],
+        hours_worked: data.hours_worked || {},
+        notes: data.notes || '',
+      };
+
+      console.log('Sending payload:', payload);
+
       if (isEditing) {
-        // If report was "NEEDS_CORRECTION", change status to "DRAFT" on edit
         if (report?.status === 'NEEDS_CORRECTION') {
           payload.status = 'DRAFT';
         }
@@ -144,7 +142,7 @@ const mutation = useMutation({
   return (
     <div className="container mt-4">
       <h2>{isEditing ? 'Edit Report' : 'Create New Report'}</h2>
-      
+
       {report?.status === 'NEEDS_CORRECTION' && (
         <div className="alert alert-warning">
           <strong>⚠️ Manager's Feedback:</strong>
@@ -152,7 +150,7 @@ const mutation = useMutation({
           <p className="mb-0 mt-2 small">Editing this report will reset it to DRAFT so you can resubmit.</p>
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="row mb-3">
           <div className="col-md-6">
@@ -341,6 +339,24 @@ const mutation = useMutation({
               </div>
             ))}
           </div>
+        </div>
+        {/* Tasks Planned for Next Week */}
+        <div className="mb-3">
+          <label className="form-label">📅 Tasks Planned for Next Week</label>
+          <textarea
+            className="form-control"
+            rows="2"
+            placeholder="List tasks planned for next week (one per line)"
+            value={formData.tasks_planned?.map(t => t.name).join('\n') || ''}
+            onChange={(e) => {
+              const tasks = e.target.value.split('\n').filter(t => t.trim()).map(t => ({
+                name: t.trim(),
+                priority: 'MEDIUM',
+              }));
+              setFormData({ ...formData, tasks_planned: tasks });
+            }}
+          />
+          <small className="text-muted">Enter one task per line</small>
         </div>
 
         <div className="mb-3">
