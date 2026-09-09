@@ -76,6 +76,6 @@ class ReportSerializer(serializers.ModelSerializer):
             'week_start', 'week_end', 'status',
             'tasks', 'blockers', 'achievements', 'hours_worked', 'notes',
             'manager_comment', 'version', 'version_history',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at' , 'tasks_planned'
         ]
         read_only_fields = ['user', 'version', 'version_history', 'created_at', 'updated_at']

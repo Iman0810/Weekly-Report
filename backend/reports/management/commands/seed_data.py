@@ -123,6 +123,11 @@ class Command(BaseCommand):
                             'Meetings': random.randint(2, 5),
                             'Documentation': random.randint(2, 8)
                         },
+                        # In the report creation section, add:
+                        'tasks_planned': [
+                            {'name': f'Next week task {j+1}', 'priority': random.choice(['HIGH', 'MEDIUM', 'LOW'])}
+                            for j in range(random.randint(1, 3))
+                        ],
                         'notes': f'Weekly report for week starting {week_start}',
                         'version': 1,
                         'version_history': []
