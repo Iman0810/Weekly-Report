@@ -11,10 +11,23 @@ function ActivityFeed() {
     },
   });
 
-  // Filter reports with review actions
+  // Filter reports with review actions (approved or needs correction)
   const activities = reports?.filter(r => 
     r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION'
   ) || [];
+
+  if (activities.length === 0) {
+    return (
+      <div className="card shadow-sm">
+        <div className="card-header">
+          <h6 className="mb-0">🔄 Recent Activity</h6>
+        </div>
+        <div className="card-body text-center text-muted py-3">
+          No recent review activity
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card shadow-sm">
@@ -22,29 +35,28 @@ function ActivityFeed() {
         <h6 className="mb-0">🔄 Recent Activity</h6>
       </div>
       <div className="card-body p-0">
-        {activities.length > 0 ? (
-          <div className="list-group list-group-flush">
-            {activities.slice(0, 5).map((report) => (
-              <div key={report.id} className="list-group-item">
-                <div className="d-flex justify-content-between">
-                  <span>
-                    <strong>{report.user?.username}</strong>
-                    <span className="text-muted"> - {report.week_start}</span>
-                  </span>
-                  <span className={`badge ${report.status === 'APPROVED' ? 'bg-success' : 'bg-warning text-dark'}`}>
-                    {report.status === 'APPROVED' ? '✅ Approved' : '🔄 Changes Requested'}
-                  </span>
+        <div className="list-group list-group-flush">
+          {activities.slice(0, 5).map((report) => (
+            <div key={report.id} className="list-group-item">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{report.user?.username}</strong>
+                  <span className="text-muted"> - </span>
+                  <span>{report.week_start}</span>
                 </div>
-                {report.manager_comment && (
-                  <small className="text-muted d-block">💬 {report.manager_comment}</small>
-                )}
+                <span className={`badge ${report.status === 'APPROVED' ? 'bg-success' : 'bg-warning text-dark'}`}>
+                  {report.status === 'APPROVED' ? '✅ Approved' : '🔄 Changes Requested'}
+                </span>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-3 text-muted">No recent activity</div>
-        )}
+              {report.manager_comment && (
+                <small className="text-muted d-block">💬 {report.manager_comment}</small>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+
+export default ActivityFeed;
