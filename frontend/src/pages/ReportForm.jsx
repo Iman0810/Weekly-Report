@@ -18,6 +18,7 @@ function ReportForm() {
     achievements: [],
     hours_worked: {},
     notes: '',
+    tasks_planned: [],
   });
 
   const [tasks, setTasks] = useState([]);
@@ -62,6 +63,7 @@ function ReportForm() {
         achievements: report.achievements || [],
         hours_worked: report.hours_worked || {},
         notes: report.notes || '',
+        tasks_planned: report.tasks_planned || [],
       });
       setTasks(report.tasks || []);
     }

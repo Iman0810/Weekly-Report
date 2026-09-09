@@ -7,16 +7,13 @@ function ActivityFeed() {
     queryKey: ['reports', 'recent'],
     queryFn: async () => {
       const response = await api.get('/reports/?page_size=10');
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      // Only show APPROVED or NEEDS_CORRECTION (no drafts)
+      return data.filter(r => r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION');
     },
   });
 
-  // Filter reports with review actions - EXCLUDE DRAFTS
-  const activities = reports?.filter(r => 
-    (r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION') && r.status !== 'DRAFT'
-  ) || [];
-
-  if (activities.length === 0) {
+  if (!reports || reports.length === 0) {
     return (
       <div className="card shadow-sm">
         <div className="card-header">
@@ -36,7 +33,7 @@ function ActivityFeed() {
       </div>
       <div className="card-body p-0">
         <div className="list-group list-group-flush">
-          {activities.slice(0, 5).map((report) => (
+          {reports.slice(0, 5).map((report) => (
             <div key={report.id} className="list-group-item">
               <div className="d-flex justify-content-between align-items-center">
                 <div>

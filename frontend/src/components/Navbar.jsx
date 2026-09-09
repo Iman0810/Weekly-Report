@@ -53,10 +53,10 @@ function Navbar() {
                   <Link className="nav-link" to="/team-dashboard">Team Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/projects">📁 Projects</Link>
+                  <Link className="nav-link" to="/projects"> Projects</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/users">👥 Users</Link>
+                  <Link className="nav-link" to="/users">Users</Link>
                 </li>
               </>
             )}

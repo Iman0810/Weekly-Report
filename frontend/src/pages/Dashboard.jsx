@@ -39,15 +39,21 @@ function Dashboard() {
     enabled: user?.role === 'MANAGER',
   });
 
-  // Fetch recent reports
+
   const { data: reports } = useQuery({
     queryKey: ['reports', 'recent'],
     queryFn: async () => {
-      const response = await api.get('/reports/?page_size=5');
-      return response.data.results || response.data;
+      const response = await api.get('/reports/?page_size=10');
+      let data = response.data.results || response.data;
+
+ 
+      if (user?.role === 'MANAGER') {
+        data = data.filter(r => r.status !== 'DRAFT');
+      }
+
+      return data;
     },
   });
-
   // Calculate hours by task type from all reports
   const hoursData = React.useMemo(() => {
     if (!allReports) return {};
