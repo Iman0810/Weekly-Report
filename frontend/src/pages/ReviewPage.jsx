@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 function ReviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState('');
   const [action, setAction] = useState('');
@@ -30,7 +32,12 @@ function ReviewPage() {
       queryClient.invalidateQueries(['reports']);
       queryClient.invalidateQueries(['report', id]);
       alert(`✅ Report ${action === 'approve' ? 'approved' : 'sent back for correction'} successfully!`);
-      navigate('/reports');
+      // Navigate based on role
+      if (user?.role === 'MANAGER') {
+        navigate('/team-dashboard');
+      } else {
+        navigate('/reports');
+      }
     },
     onError: (error) => {
       alert('❌ Failed to review report: ' + (error.response?.data?.error || 'Unknown error'));
@@ -42,11 +49,11 @@ function ReviewPage() {
       alert('Please provide feedback for the team member.');
       return;
     }
-    
-    const message = actionType === 'approve' 
-      ? 'Approve this report?' 
+
+    const message = actionType === 'approve'
+      ? 'Approve this report?'
       : 'Send this report back for correction?';
-    
+
     if (window.confirm(message)) {
       reviewMutation.mutate({ action: actionType, comment });
     }
@@ -71,7 +78,12 @@ function ReviewPage() {
         <div className="alert alert-warning">
           <h4>⚠️ This report is not in review</h4>
           <p>Current status: {report.status}</p>
-          <Link to="/reports" className="btn btn-primary">Back to Reports</Link>
+          <Link 
+            to={user?.role === 'MANAGER' ? '/team-dashboard' : '/reports'} 
+            className="btn btn-primary"
+          >
+            Back to {user?.role === 'MANAGER' ? 'Team Dashboard' : 'Reports'}
+          </Link>
         </div>
       </div>
     );
@@ -81,7 +93,12 @@ function ReviewPage() {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Review Report</h2>
-        <Link to="/reports" className="btn btn-secondary">Back to Reports</Link>
+        <Link 
+          to={user?.role === 'MANAGER' ? '/team-dashboard' : '/reports'} 
+          className="btn btn-secondary"
+        >
+          Back to {user?.role === 'MANAGER' ? 'Team Dashboard' : 'Reports'}
+        </Link>
       </div>
 
       <div className="row">
@@ -95,7 +112,7 @@ function ReviewPage() {
               <p><strong>Week:</strong> {report.week_start} to {report.week_end}</p>
               <p><strong>Project:</strong> {report.project?.name || 'N/A'}</p>
               <p><strong>Status:</strong> {getStatusBadge(report.status)}</p>
-              
+
               {/* Tasks */}
               <h6 className="mt-3">Tasks</h6>
               {report.tasks && report.tasks.length > 0 ? (
@@ -132,6 +149,18 @@ function ReviewPage() {
                   <ul>
                     {report.blockers.map((b, i) => (
                       <li key={i}>{b.description} {b.is_key && '⭐'}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* Tasks Planned for Next Week */}
+              {report.tasks_planned && report.tasks_planned.length > 0 && (
+                <>
+                  <h6 className="mt-3">📅 Tasks Planned for Next Week</h6>
+                  <ul>
+                    {report.tasks_planned.map((task, index) => (
+                      <li key={index}>{task.name}</li>
                     ))}
                   </ul>
                 </>

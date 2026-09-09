@@ -78,6 +78,7 @@ function ReportForm() {
         achievements: data.achievements || [],
         hours_worked: data.hours_worked || {},
         notes: data.notes || '',
+        tasks_planned: data.tasks_planned || [],
       };
 
       console.log('Sending payload:', payload);
@@ -350,7 +351,7 @@ function ReportForm() {
             value={formData.tasks_planned?.map(t => t.name).join('\n') || ''}
             onChange={(e) => {
               const tasks = e.target.value.split('\n').filter(t => t.trim()).map(t => ({
-                name: t.trim(),
+                name: t,
                 priority: 'MEDIUM',
               }));
               setFormData({ ...formData, tasks_planned: tasks });

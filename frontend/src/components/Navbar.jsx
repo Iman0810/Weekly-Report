@@ -21,7 +21,7 @@ function Navbar() {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{ width: '100%' }}>
-      <div className="container-fluid px-4">  {/* Changed from container to container-fluid */}
+      <div className="container-fluid px-4">
         <Link className="navbar-brand fw-bold" to="/">
           📊 Weekly Report
         </Link>
@@ -38,9 +38,15 @@ function Navbar() {
             <li className="nav-item">
               <Link className="nav-link" to="/">Dashboard</Link>
             </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/reports">My Reports</Link>
-            </li>
+            
+            {/* My Reports - Only for Team Members */}
+            {user?.role === 'TEAM_MEMBER' && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/reports">My Reports</Link>
+              </li>
+            )}
+            
+            {/* Manager Links */}
             {user?.role === 'MANAGER' && (
               <>
                 <li className="nav-item">

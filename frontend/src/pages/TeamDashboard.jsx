@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
-import Charts from '../components/Charts';
 
 function TeamDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
-  const [weekFilter, setWeekFilter] = useState('');
+  const [weekStartFilter, setWeekStartFilter] = useState('');
+  const [weekEndFilter, setWeekEndFilter] = useState('');
 
   // Fetch all users (team members only for filter)
   const { data: users } = useQuery({
@@ -20,14 +20,20 @@ function TeamDashboard() {
 
   // Fetch all reports with filters
   const { data: reports, isLoading } = useQuery({
-    queryKey: ['reports', 'all', statusFilter, userFilter, weekFilter],
+    queryKey: ['reports', 'all', statusFilter, userFilter, weekStartFilter, weekEndFilter],
     queryFn: async () => {
       const params = {};
       if (statusFilter) params.status = statusFilter;
       if (userFilter) params.user_id = userFilter;
-      if (weekFilter) params.week_start = weekFilter;
+      if (weekStartFilter) params.week_start = weekStartFilter;
+      if (weekEndFilter) params.week_end = weekEndFilter;
       const response = await api.get('/reports/', { params });
-      return response.data.results || response.data;
+      let data = response.data.results || response.data;
+      
+      // Managers should NOT see DRAFT reports
+      data = data.filter(r => r.status !== 'DRAFT');
+      
+      return data;
     },
   });
 
@@ -39,20 +45,6 @@ function TeamDashboard() {
       return response.data;
     },
   });
-
-  // Calculate hours by task type from reports
-  const hoursData = React.useMemo(() => {
-    if (!reports) return {};
-    const hours = {};
-    reports.forEach(report => {
-      if (report.hours_worked) {
-        Object.entries(report.hours_worked).forEach(([type, value]) => {
-          hours[type] = (hours[type] || 0) + value;
-        });
-      }
-    });
-    return hours;
-  }, [reports]);
 
   const getStatusBadge = (status) => {
     const classes = {
@@ -162,14 +154,6 @@ function TeamDashboard() {
         </div>
       </div>
 
-      {/* Charts Section */}
-      {stats && reports && reports.length > 0 && (
-        <div className="mb-4">
-          <h4 className="mb-3">📈 Visual Insights</h4>
-          <Charts reports={reports} stats={stats} hoursData={hoursData} />
-        </div>
-      )}
-
       {/* Filters */}
       <div className="row mb-4">
         <div className="col-md-3">
@@ -179,7 +163,6 @@ function TeamDashboard() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="">📊 All Statuses</option>
-            <option value="DRAFT">📝 Draft</option>
             <option value="SUBMITTED">📤 Submitted</option>
             <option value="NEEDS_CORRECTION">🔄 Needs Correction</option>
             <option value="APPROVED">✅ Approved</option>
@@ -201,17 +184,21 @@ function TeamDashboard() {
         </div>
         <div className="col-md-3">
           <input
-            type="week"
+            type="date"
             className="form-control"
-            value={weekFilter}
-            onChange={(e) => setWeekFilter(e.target.value)}
-            placeholder="Filter by week"
+            value={weekStartFilter}
+            onChange={(e) => setWeekStartFilter(e.target.value)}
+            placeholder="Start date"
           />
         </div>
-        <div className="col-md-3 text-end">
-          <span className="text-muted">
-            Showing: <strong>{reports?.length || 0}</strong> reports
-          </span>
+        <div className="col-md-3">
+          <input
+            type="date"
+            className="form-control"
+            value={weekEndFilter}
+            onChange={(e) => setWeekEndFilter(e.target.value)}
+            placeholder="End date"
+          />
         </div>
       </div>
 

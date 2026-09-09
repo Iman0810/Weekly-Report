@@ -40,14 +40,16 @@ function ReportDetail() {
 
   const isEditable = report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION';
   const canResubmit = report.status === 'NEEDS_CORRECTION';
+  const backUrl = user?.role === 'MANAGER' ? '/team-dashboard' : '/reports';
+  const backLabel = user?.role === 'MANAGER' ? 'Back to Team Dashboard' : 'Back to Reports';
 
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Report Details</h2>
         <div>
-          <Link to="/reports" className="btn btn-secondary me-2">Back to Reports</Link>
-          {isEditable && (
+          <Link to={backUrl} className="btn btn-secondary me-2">{backLabel}</Link>
+          {isEditable && user?.role === 'TEAM_MEMBER' && (
             <Link to={`/reports/${report.id}/edit`} className="btn btn-primary">
               {canResubmit ? '✏️ Edit & Resubmit' : 'Edit Report'}
             </Link>
@@ -169,6 +171,22 @@ function ReportDetail() {
                   {blocker.description}
                   {blocker.is_key && <span className="badge bg-danger ms-2">Key Issue</span>}
                 </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Tasks Planned for Next Week */}
+      {report.tasks_planned && report.tasks_planned.length > 0 && (
+        <div className="card mb-3">
+          <div className="card-header">
+            <h5 className="mb-0">📅 Tasks Planned for Next Week</h5>
+          </div>
+          <div className="card-body">
+            <ul className="mb-0">
+              {report.tasks_planned.map((task, index) => (
+                <li key={index}>{task.name}</li>
               ))}
             </ul>
           </div>

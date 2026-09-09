@@ -11,9 +11,9 @@ function ActivityFeed() {
     },
   });
 
-  // Filter reports with review actions (approved or needs correction)
+  // Filter reports with review actions - EXCLUDE DRAFTS
   const activities = reports?.filter(r => 
-    r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION'
+    (r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION') && r.status !== 'DRAFT'
   ) || [];
 
   if (activities.length === 0) {

@@ -14,18 +14,17 @@ function ReportList() {
     queryFn: async () => {
       const params = statusFilter ? { status: statusFilter } : {};
       const response = await api.get('/reports/', { params });
+      let data = response.data.results || response.data;
 
-      console.log('Fetched reports:', response.data.results || response.data);
-      return response.data.results || response.data;
-      
+      // Managers should NOT see DRAFT reports
       if (user?.role === 'MANAGER') {
         data = data.filter(r => r.status !== 'DRAFT');
       }
-      console.log('reports data: ', data);
+
+      console.log('📊 Reports data:', data);
       return data;
     },
   });
- 
 
   const submitMutation = useMutation({
     mutationFn: async (id) => {
@@ -133,7 +132,11 @@ function ReportList() {
                         <small className="text-muted">→ {report.week_end}</small>
                       </td>
                       <td className="align-middle">
-                        {report.project?.name || <span className="text-muted">No project</span>}
+                        {report.project?.name ? (
+                          <span className="badge bg-info text-dark">{report.project.name}</span>
+                        ) : (
+                          <span className="text-muted">No project</span>
+                        )}
                       </td>
                       <td className="align-middle">
                         {getStatusBadge(report.status)}
@@ -153,17 +156,14 @@ function ReportList() {
                             👁️
                           </Link>
 
-                          {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && user?.role !== 'MANAGER' && (
-                            <Link
-                              to={`/reports/${report.id}/edit`}
-                              className="btn btn-outline-primary"
-                              title={report.status === 'NEEDS_CORRECTION' ? 'Edit & Resubmit' : 'Edit'}
-                            >
+                          {(report.status === 'DRAFT' || report.status === 'NEEDS_CORRECTION') && user?.role === 'TEAM_MEMBER' && (
+                            <Link to={`/reports/${report.id}/edit`} className="btn btn-outline-primary">
                               ✏️
                             </Link>
                           )}
 
-                          {report.status === 'DRAFT' && user?.role !== 'MANAGER' && (
+                          {/* Submit - Only for Team Members on DRAFT */}
+                          {report.status === 'DRAFT' && user?.role === 'TEAM_MEMBER' && (
                             <button
                               onClick={() => handleSubmit(report.id)}
                               className="btn btn-outline-success"
@@ -174,7 +174,8 @@ function ReportList() {
                             </button>
                           )}
 
-                          {report.status === 'NEEDS_CORRECTION' && user?.role !== 'MANAGER' && (
+                          {/* Resubmit - Only for Team Members on NEEDS_CORRECTION */}
+                          {report.status === 'NEEDS_CORRECTION' && user?.role === 'TEAM_MEMBER' && (
                             <button
                               onClick={() => handleSubmit(report.id)}
                               className="btn btn-outline-warning"
@@ -185,6 +186,7 @@ function ReportList() {
                             </button>
                           )}
 
+                          {/* Review - Only for Managers on SUBMITTED */}
                           {user?.role === 'MANAGER' && report.status === 'SUBMITTED' && (
                             <Link
                               to={`/reports/${report.id}/review`}
@@ -200,7 +202,7 @@ function ReportList() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center py-5">
+                    <td colSpan={user?.role === 'MANAGER' ? 6 : 5} className="text-center py-5">
                       <div className="text-muted">
                         <h5>📭 No reports found</h5>
                         <p>Create your first report by clicking the <strong>"New Report"</strong> button above.</p>

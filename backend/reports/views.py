@@ -32,6 +32,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return user_projects
   
         return Project.objects.none() 
+
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
@@ -138,21 +139,10 @@ class ReportViewSet(viewsets.ModelViewSet):
         total_members = team_members.count()
         
         today = datetime.now().date()
-        week_start = today - timedelta(days=today.weekday()) 
-        week_end = week_start + timedelta(days=6)  
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
         
-        total_reports = Report.objects.count()
-        submitted_count = Report.objects.filter(status='SUBMITTED').count()
-        needs_correction_count = Report.objects.filter(status='NEEDS_CORRECTION').count()
-        approved_count = Report.objects.filter(status='APPROVED').count()
-        draft_count = Report.objects.filter(status='DRAFT').count()
-        
-        submitted_this_week = Report.objects.filter(
-            status='SUBMITTED',
-            week_start__gte=week_start,
-            week_end__lte=week_end
-        ).count()
-        
+        # Count open blockers across all reports
         open_blockers = 0
         for report in Report.objects.all():
             if report.blockers:
@@ -160,18 +150,17 @@ class ReportViewSet(viewsets.ModelViewSet):
                     if blocker.get('is_key', False):
                         open_blockers += 1
         
-  
-        submitted_this_week_users = Report.objects.filter(
-            status='SUBMITTED',
+        # Calculate pending and not_started users
+        submitted_users_this_week = Report.objects.filter(
+            status__in=['SUBMITTED', 'APPROVED'],
             week_start__gte=week_start,
             week_end__lte=week_end
         ).values_list('user_id', flat=True).distinct()
+        submitted_count_this_week = len(set(submitted_users_this_week))
         
-        submitted_count_this_week = len(set(submitted_this_week_users))
-        
+        # Pending = has draft but not submitted for this week
         pending_users = 0
         for member in team_members:
-           
             has_draft = Report.objects.filter(
                 user=member,
                 status='DRAFT',
@@ -180,7 +169,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             ).exists()
             has_submitted = Report.objects.filter(
                 user=member,
-                status='SUBMITTED',
+                status__in=['SUBMITTED', 'APPROVED'],
                 week_start__gte=week_start,
                 week_end__lte=week_end
             ).exists()
@@ -189,23 +178,23 @@ class ReportViewSet(viewsets.ModelViewSet):
                 pending_users += 1
         
         not_started_users = total_members - submitted_count_this_week - pending_users
-       
+        
         compliance_rate = round((submitted_count_this_week / total_members * 100), 1) if total_members > 0 else 0
         
         return Response({
-            'total_reports': total_reports,
-            'submitted': submitted_count,
-            'needs_correction': needs_correction_count,
-            'approved': approved_count,
-            'draft': draft_count,
-            'submitted_this_week': submitted_this_week,
+            'total_reports': Report.objects.count(),
+            'submitted': Report.objects.filter(status='SUBMITTED').count(),
+            'needs_correction': Report.objects.filter(status='NEEDS_CORRECTION').count(),
+            'approved': Report.objects.filter(status='APPROVED').count(),
+            'draft': Report.objects.filter(status='DRAFT').count(),
+            'submitted_this_week': submitted_count_this_week,
             'total_members': total_members,
             'compliance_rate': compliance_rate,
             'open_blockers': open_blockers,
             'pending_users': pending_users,
             'not_started_users': not_started_users,
-            'week_start': week_start,
-            'week_end': week_end,
+            'week_start': week_start.isoformat(),
+            'week_end': week_end.isoformat(),
         })
 
 class UserViewSet(viewsets.ModelViewSet):  
