@@ -23,17 +23,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        
-        # Managers see all projects
+
         if user.role == 'MANAGER':
             return Project.objects.all()
         
-        # Team members see projects they're assigned to OR all projects (if none assigned)
         user_projects = Project.objects.filter(team_members=user)
         if user_projects.exists():
             return user_projects
-        # If no projects assigned, show all projects (or empty)
-        return Project.objects.none()  # Or return Project.objects.all() if you prefer
+  
+        return Project.objects.none() 
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
@@ -136,30 +134,25 @@ class ReportViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Get all team members
         team_members = User.objects.filter(role='TEAM_MEMBER')
         total_members = team_members.count()
         
-        # Calculate date ranges
         today = datetime.now().date()
-        week_start = today - timedelta(days=today.weekday())  # Monday
-        week_end = week_start + timedelta(days=6)  # Sunday
+        week_start = today - timedelta(days=today.weekday()) 
+        week_end = week_start + timedelta(days=6)  
         
-        # Basic stats
         total_reports = Report.objects.count()
         submitted_count = Report.objects.filter(status='SUBMITTED').count()
         needs_correction_count = Report.objects.filter(status='NEEDS_CORRECTION').count()
         approved_count = Report.objects.filter(status='APPROVED').count()
         draft_count = Report.objects.filter(status='DRAFT').count()
         
-        # Reports submitted this week
         submitted_this_week = Report.objects.filter(
             status='SUBMITTED',
             week_start__gte=week_start,
             week_end__lte=week_end
         ).count()
         
-        # Count open blockers across all reports
         open_blockers = 0
         for report in Report.objects.all():
             if report.blockers:
@@ -167,7 +160,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                     if blocker.get('is_key', False):
                         open_blockers += 1
         
-        # Track who has submitted this week
+  
         submitted_this_week_users = Report.objects.filter(
             status='SUBMITTED',
             week_start__gte=week_start,
@@ -176,11 +169,9 @@ class ReportViewSet(viewsets.ModelViewSet):
         
         submitted_count_this_week = len(set(submitted_this_week_users))
         
-        # Calculate compliance rate (submitted vs pending vs late)
-        # Pending = has draft but not submitted
         pending_users = 0
         for member in team_members:
-            # Check if user has any draft for this week
+           
             has_draft = Report.objects.filter(
                 user=member,
                 status='DRAFT',
@@ -197,10 +188,8 @@ class ReportViewSet(viewsets.ModelViewSet):
             if has_draft and not has_submitted:
                 pending_users += 1
         
-        # Not started = no report at all for this week
         not_started_users = total_members - submitted_count_this_week - pending_users
-        
-        # Compliance rate = submitted / total_members * 100
+       
         compliance_rate = round((submitted_count_this_week / total_members * 100), 1) if total_members > 0 else 0
         
         return Response({
@@ -219,7 +208,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             'week_end': week_end,
         })
 
-class UserViewSet(viewsets.ModelViewSet):  # Change from ReadOnlyModelViewSet to ModelViewSet
+class UserViewSet(viewsets.ModelViewSet):  
     """
     ViewSet for managing users (only for managers)
     """
@@ -232,13 +221,11 @@ class UserViewSet(viewsets.ModelViewSet):  # Change from ReadOnlyModelViewSet to
         return User.objects.filter(id=self.request.user.id)
     
     def destroy(self, request, *args, **kwargs):
-        # Only managers can delete users
         if request.user.role != 'MANAGER':
             return Response(
                 {'error': 'Only managers can delete users'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        # Prevent deleting self
         user = self.get_object()
         if user.id == request.user.id:
             return Response(

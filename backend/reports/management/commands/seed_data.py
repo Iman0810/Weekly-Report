@@ -123,7 +123,6 @@ class Command(BaseCommand):
                             'Meetings': random.randint(2, 5),
                             'Documentation': random.randint(2, 8)
                         },
-                        # In the report creation section, add:
                         'tasks_planned': [
                             {'name': f'Next week task {j+1}', 'priority': random.choice(['HIGH', 'MEDIUM', 'LOW'])}
                             for j in range(random.randint(1, 3))
@@ -137,4 +136,4 @@ class Command(BaseCommand):
                     report_count += 1
                     self.stdout.write(f'✅ Created report for {user.username} - week {week_start}')
         
-        self.stdout.write(self.style.SUCCESS(f'🎉 Database seeded successfully! Created {report_count} reports.'))
+        self.stdout.write(self.style.SUCCESS(f' Database seeded successfully! Created {report_count} reports.'))

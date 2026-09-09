@@ -60,7 +60,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         return instance
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    project = ProjectSerializer(read_only=True)  # For reading
+    project = ProjectSerializer(read_only=True)  
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),
         source='project',

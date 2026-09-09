@@ -18,9 +18,14 @@ function ReportList() {
       console.log('Fetched reports:', response.data.results || response.data);
       return response.data.results || response.data;
       
+      if (user?.role === 'MANAGER') {
+        data = data.filter(r => r.status !== 'DRAFT');
+      }
+      console.log('reports data: ', data);
+      return data;
     },
   });
-  console.log('Reports data:', reports);
+ 
 
   const submitMutation = useMutation({
     mutationFn: async (id) => {
