@@ -85,9 +85,6 @@ function Dashboard() {
           <h1 className="display-6 fw-bold mb-0">👋 Welcome, {user?.username}!</h1>
           <p className="text-muted mb-0">Role: {user?.role === 'MANAGER' ? 'Manager' : 'Team Member'}</p>
         </div>
-        <div>
-          <button onClick={logout} className="btn btn-outline-danger">Logout</button>
-        </div>
       </div>
 
       <div className="row">

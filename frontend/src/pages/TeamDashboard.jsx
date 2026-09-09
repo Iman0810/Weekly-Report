@@ -6,6 +6,7 @@ import api from '../api/axios';
 function TeamDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
   const [weekStartFilter, setWeekStartFilter] = useState('');
   const [weekEndFilter, setWeekEndFilter] = useState('');
 
@@ -18,17 +19,28 @@ function TeamDashboard() {
     },
   });
 
-  // Fetch all reports with filters
+  // Fetch all projects (for project filter)
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const response = await api.get('/projects/');
+      return response.data.results || response.data;
+    },
+  });
+
+  // Fetch all reports with filters - GET ALL REPORTS using the /all_reports/ endpoint
   const { data: reports, isLoading } = useQuery({
-    queryKey: ['reports', 'all', statusFilter, userFilter, weekStartFilter, weekEndFilter],
+    queryKey: ['reports', 'all', statusFilter, userFilter, projectFilter, weekStartFilter, weekEndFilter],
     queryFn: async () => {
       const params = {};
       if (statusFilter) params.status = statusFilter;
       if (userFilter) params.user_id = userFilter;
+      if (projectFilter) params.project_id = projectFilter;
       if (weekStartFilter) params.week_start = weekStartFilter;
       if (weekEndFilter) params.week_end = weekEndFilter;
-      const response = await api.get('/reports/', { params });
-      let data = response.data.results || response.data;
+      // ✅ Fixed: Added trailing slash
+      const response = await api.get('/reports/all_reports/', { params });
+      let data = response.data || [];
       
       // Managers should NOT see DRAFT reports
       data = data.filter(r => r.status !== 'DRAFT');
@@ -154,51 +166,73 @@ function TeamDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - One Line */}
       <div className="row mb-4">
-        <div className="col-md-3">
+        <div className="col-md-2">
+          <label className="form-label small">Status</label>
           <select
-            className="form-select"
+            className="form-select form-select-sm"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">📊 All Statuses</option>
-            <option value="SUBMITTED">📤 Submitted</option>
-            <option value="NEEDS_CORRECTION">🔄 Needs Correction</option>
-            <option value="APPROVED">✅ Approved</option>
+            <option value="">All</option>
+            <option value="SUBMITTED">Submitted</option>
+            <option value="NEEDS_CORRECTION">Needs Correction</option>
+            <option value="APPROVED">Approved</option>
           </select>
         </div>
-        <div className="col-md-3">
+        <div className="col-md-2">
+          <label className="form-label small">Team Member</label>
           <select
-            className="form-select"
+            className="form-select form-select-sm"
             value={userFilter}
             onChange={(e) => setUserFilter(e.target.value)}
           >
-            <option value="">👥 All Team Members</option>
+            <option value="">All</option>
             {teamMembers.map((member) => (
               <option key={member.id} value={member.id}>
-                {member.username} ({member.email || 'no email'})
+                {member.username}
               </option>
             ))}
           </select>
         </div>
-        <div className="col-md-3">
+        <div className="col-md-2">
+          <label className="form-label small">Project</label>
+          <select
+            className="form-select form-select-sm"
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.target.value)}
+          >
+            <option value="">All</option>
+            {projects?.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-2">
+          <label className="form-label small">Start Date</label>
           <input
             type="date"
-            className="form-control"
+            className="form-control form-control-sm"
             value={weekStartFilter}
             onChange={(e) => setWeekStartFilter(e.target.value)}
-            placeholder="Start date"
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-md-2">
+          <label className="form-label small">End Date</label>
           <input
             type="date"
-            className="form-control"
+            className="form-control form-control-sm"
             value={weekEndFilter}
             onChange={(e) => setWeekEndFilter(e.target.value)}
-            placeholder="End date"
           />
+        </div>
+        <div className="col-md-2 d-flex align-items-end">
+          <span className="text-muted small">
+            Showing: <strong>{reports?.length || 0}</strong> of <strong>{stats?.total_reports || 0}</strong> reports
+          </span>
         </div>
       </div>
 

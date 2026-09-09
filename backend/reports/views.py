@@ -128,6 +128,41 @@ class ReportViewSet(viewsets.ModelViewSet):
         )
     
     @action(detail=False, methods=['get'])
+    def all_reports(self, request):
+        """Get all reports without pagination (for managers)"""
+        if request.user.role != 'MANAGER':
+            return Response(
+                {'error': 'Only managers can view all reports'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        queryset = Report.objects.all().order_by('-created_at')
+        
+        # Apply filters
+        user_id = request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        project_id = request.query_params.get('project_id')
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+        
+        week_start = request.query_params.get('week_start')
+        if week_start:
+            queryset = queryset.filter(week_start=week_start)
+        
+        week_end = request.query_params.get('week_end')
+        if week_end:
+            queryset = queryset.filter(week_end=week_end)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
     def stats(self, request):
         if request.user.role != 'MANAGER':
             return Response(
