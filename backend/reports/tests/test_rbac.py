@@ -1,13 +1,3 @@
-"""
-Role-Based Access Control (RBAC) Tests
-
-Verifies that the API enforces proper access control:
-- Team members can only see/edit their own reports
-- Team members cannot access manager-only endpoints
-- Managers can see all reports and review them
-- Unauthenticated users cannot access protected endpoints
-"""
-
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -19,10 +9,8 @@ User = get_user_model()
 
 
 class RBACBaseTestCase(TestCase):
-    """Base setup for all RBAC tests"""
 
     def setUp(self):
-        """Create test users, projects, and reports"""
         # Create a manager
         self.manager = User.objects.create_user(
             username='manager_test',
@@ -79,7 +67,6 @@ class RBACBaseTestCase(TestCase):
         self.client = APIClient()
 
     def login_as(self, user):
-        """Helper to authenticate as a user via JWT"""
         response = self.client.post('/api/auth/token/', {
             'username': user.username,
             'password': 'testpass123',
@@ -90,10 +77,9 @@ class RBACBaseTestCase(TestCase):
 
 
 class TeamMemberAccessControlTests(RBACBaseTestCase):
-    """Tests for team member role restrictions"""
 
     def test_team_member_sees_only_own_reports(self):
-        """A team member should ONLY see their own reports in the list endpoint"""
+
         self.login_as(self.team_member_1)
 
         response = self.client.get('/api/reports/')
@@ -108,16 +94,13 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
         self.assertNotIn(self.report_tm2.id, report_ids)
 
     def test_team_member_cannot_view_other_report_detail(self):
-        """A team member must NOT access another team member's report detail"""
         self.login_as(self.team_member_1)
 
         response = self.client.get(f'/api/reports/{self.report_tm2.id}/')
 
-        # Django will return 404 (queryset filtered) not 403 - both are safe
         self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
     def test_team_member_cannot_update_other_report(self):
-        """A team member must NOT edit another team member's report"""
         self.login_as(self.team_member_1)
 
         response = self.client.patch(
@@ -133,7 +116,6 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
         self.assertEqual(self.report_tm2.notes, '')
 
     def test_team_member_cannot_delete_other_report(self):
-        """A team member must NOT delete another team member's report"""
         self.login_as(self.team_member_1)
 
         response = self.client.delete(f'/api/reports/{self.report_tm2.id}/')
@@ -144,7 +126,7 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
         self.assertTrue(Report.objects.filter(id=self.report_tm2.id).exists())
 
     def test_team_member_cannot_access_stats_endpoint(self):
-        """A team member must NOT access the manager-only stats endpoint"""
+    
         self.login_as(self.team_member_1)
 
         response = self.client.get('/api/reports/stats/')
@@ -152,7 +134,7 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_team_member_cannot_access_all_reports_endpoint(self):
-        """A team member must NOT access the manager-only all_reports endpoint"""
+      
         self.login_as(self.team_member_1)
 
         response = self.client.get('/api/reports/all_reports/')
@@ -160,7 +142,7 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_team_member_cannot_access_user_list(self):
-        """A team member must NOT list all users (manager-only)"""
+       
         self.login_as(self.team_member_1)
 
         response = self.client.get('/api/users/')
@@ -173,7 +155,7 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
             self.assertNotIn(self.manager.username, usernames)
 
     def test_team_member_cannot_review_reports(self):
-        """A team member must NOT be able to review (approve/reject) reports"""
+        
         self.login_as(self.team_member_1)
 
         response = self.client.post(f'/api/reports/{self.report_tm2.id}/review/', {
@@ -185,10 +167,10 @@ class TeamMemberAccessControlTests(RBACBaseTestCase):
 
 
 class ManagerAccessControlTests(RBACBaseTestCase):
-    """Tests for manager role permissions"""
+  
 
     def test_manager_sees_all_reports(self):
-        """A manager should see ALL reports from all team members"""
+      
         self.login_as(self.manager)
 
         response = self.client.get('/api/reports/')
@@ -201,7 +183,7 @@ class ManagerAccessControlTests(RBACBaseTestCase):
         self.assertIn(self.report_tm2.id, report_ids)
 
     def test_manager_can_view_any_report_detail(self):
-        """A manager can view any report detail"""
+      
         self.login_as(self.manager)
 
         response = self.client.get(f'/api/reports/{self.report_tm2.id}/')
@@ -210,7 +192,7 @@ class ManagerAccessControlTests(RBACBaseTestCase):
         self.assertEqual(response.data['id'], self.report_tm2.id)
 
     def test_manager_can_access_stats_endpoint(self):
-        """A manager can access the stats endpoint"""
+       
         self.login_as(self.manager)
 
         response = self.client.get('/api/reports/stats/')
@@ -219,7 +201,7 @@ class ManagerAccessControlTests(RBACBaseTestCase):
         self.assertIn('total_reports', response.data)
 
     def test_manager_can_access_all_reports_endpoint(self):
-        """A manager can access the all_reports endpoint (no pagination)"""
+      
         self.login_as(self.manager)
 
         response = self.client.get('/api/reports/all_reports/')
@@ -229,7 +211,7 @@ class ManagerAccessControlTests(RBACBaseTestCase):
         self.assertIsInstance(response.data, list)
 
     def test_manager_can_review_submitted_report(self):
-        """A manager can approve/reject a submitted report"""
+      
         self.login_as(self.manager)
 
         response = self.client.post(f'/api/reports/{self.report_tm2.id}/review/', {
@@ -243,7 +225,7 @@ class ManagerAccessControlTests(RBACBaseTestCase):
         self.assertEqual(self.report_tm2.status, 'APPROVED')
 
     def test_manager_can_request_changes(self):
-        """A manager can request changes with a comment"""
+     
         self.login_as(self.manager)
 
         response = self.client.post(f'/api/reports/{self.report_tm2.id}/review/', {
@@ -259,29 +241,28 @@ class ManagerAccessControlTests(RBACBaseTestCase):
 
 
 class AuthenticationTests(RBACBaseTestCase):
-    """Tests for authentication requirements"""
+   
 
     def test_unauthenticated_cannot_list_reports(self):
-        """Anonymous user cannot list reports"""
+   
         response = self.client.get('/api/reports/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthenticated_cannot_view_report_detail(self):
-        """Anonymous user cannot view report detail"""
+
         response = self.client.get(f'/api/reports/{self.report_tm1.id}/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthenticated_cannot_access_stats(self):
-        """Anonymous user cannot access stats endpoint"""
+ 
         response = self.client.get('/api/reports/stats/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class WorkflowTests(RBACBaseTestCase):
-    """Tests for the review/correction workflow"""
 
     def test_team_member_can_submit_own_draft(self):
-        """A team member can submit their own draft report"""
+
         self.login_as(self.team_member_1)
 
         response = self.client.post(f'/api/reports/{self.report_tm1.id}/submit/')
@@ -291,7 +272,6 @@ class WorkflowTests(RBACBaseTestCase):
         self.assertEqual(self.report_tm1.status, 'SUBMITTED')
 
     def test_team_member_cannot_submit_already_submitted(self):
-        """Cannot submit a report that isn't a draft"""
         self.login_as(self.team_member_2)
 
         response = self.client.post(f'/api/reports/{self.report_tm2.id}/submit/')
@@ -299,7 +279,6 @@ class WorkflowTests(RBACBaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_full_review_cycle(self):
-        """Test the full workflow: draft → submit → needs correction → resubmit → approve"""
         # 1. Team member 1 submits their draft
         self.login_as(self.team_member_1)
         self.client.post(f'/api/reports/{self.report_tm1.id}/submit/')
