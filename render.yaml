@@ -1,0 +1,42 @@
+databases:
+  - name: weekly-report-db
+    plan: free
+    databaseName: weekly_report
+    user: weekly_report_user
+
+services:
+  - type: web
+    name: weekly-report-backend
+    plan: free
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_NAME
+        fromDatabase:
+          name: weekly-report-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: weekly-report-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: weekly-report-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: weekly-report-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: weekly-report-db
+          property: port
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: "False"
