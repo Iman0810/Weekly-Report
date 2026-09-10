@@ -1,20 +1,22 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from datetime import timedelta
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fallback-key-change-in-production-xyz123'))
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
-
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+DEBUG = os.getenv('DEBUG', os.getenv('DJANGO_DEBUG', 'True')) == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')).split(',')
 
 
 # Application definition
@@ -69,14 +71,13 @@ WSGI_APPLICATION = 'backend_config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'weekly_report'),
-        'USER': os.getenv('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
-        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'weekly_report')),
+        'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
+        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+        'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
+        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
     }
 }
-
 
 
 # Password validation
@@ -117,10 +118,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'reports.User'
 
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+# CORS 
+CORS_ALLOW_ALL_ORIGINS = True  # Development only
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = []  
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:5173",
+]
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+]
 
 # REST Framework
 REST_FRAMEWORK = {

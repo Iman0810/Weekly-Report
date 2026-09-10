@@ -43,3 +43,8 @@ frontend/*.local
 coverage/
 *.coverage
 .pytest_cache/
+
+# Ignore all .env files
+**/.env
+# Keep .env.example files
+!**/.env.example
