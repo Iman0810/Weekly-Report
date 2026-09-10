@@ -6,10 +6,12 @@ from .models import User, Project, Report
 from .serializers import UserSerializer, UserRegistrationSerializer, ProjectSerializer, ReportSerializer
 from datetime import datetime, timedelta
 
+#new user registration view
 class UserRegistrationView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = UserRegistrationSerializer
 
+#allows authenticated to view & update their profile
 class UserDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
@@ -17,6 +19,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+#Project CRUD and team member management
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -33,6 +36,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
   
         return Project.objects.none() 
 
+#Handles report CRUD, filtering,submission, review and stats
 class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
@@ -193,7 +197,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         ).values_list('user_id', flat=True).distinct()
         submitted_count_this_week = len(set(submitted_users_this_week))
         
-        # Pending = has draft but not submitted for this week
+        # Pending = has draft but not submited for this week
         pending_users = 0
         for member in team_members:
             has_draft = Report.objects.filter(
@@ -232,10 +236,9 @@ class ReportViewSet(viewsets.ModelViewSet):
             'week_end': week_end.isoformat(),
         })
 
+#view foe manging users
 class UserViewSet(viewsets.ModelViewSet):  
-    """
-    ViewSet for managing users (only for managers)
-    """
+
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
     

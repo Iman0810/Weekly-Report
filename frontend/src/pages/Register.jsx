@@ -36,7 +36,7 @@ function Register() {
       return;
     }
 
-    // Prepare data for API (remove confirm_password)
+    // Prepare data for API 
     const { confirm_password, ...registerData } = formData;
     
     const result = await register(registerData);

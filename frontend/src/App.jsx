@@ -2,12 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
-
-// Auth Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
-
-// Protected Pages
 import Dashboard from './pages/Dashboard';
 import ReportList from './pages/ReportList';
 import ReportForm from './pages/ReportForm';

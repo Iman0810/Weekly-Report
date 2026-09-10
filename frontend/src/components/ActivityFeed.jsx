@@ -8,7 +8,7 @@ function ActivityFeed() {
     queryFn: async () => {
       const response = await api.get('/reports/?page_size=10');
       const data = response.data.results || response.data;
-      // Only show APPROVED or NEEDS_CORRECTION (no drafts)
+      
       return data.filter(r => r.status === 'APPROVED' || r.status === 'NEEDS_CORRECTION');
     },
   });

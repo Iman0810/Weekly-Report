@@ -58,6 +58,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             instance.team_members.set(User.objects.filter(id__in=team_member_ids))
         
         return instance
+    
 class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     project = ProjectSerializer(read_only=True)  

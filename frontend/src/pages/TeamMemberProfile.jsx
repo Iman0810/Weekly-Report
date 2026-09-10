@@ -8,7 +8,7 @@ function TeamDashboard() {
   const [userFilter, setUserFilter] = useState('');
   const [weekFilter, setWeekFilter] = useState('');
 
-  // Fetch all users (team members only for filter)
+  // Fetch all users 
   const { data: users } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {

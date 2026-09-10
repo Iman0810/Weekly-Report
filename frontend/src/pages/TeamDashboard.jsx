@@ -38,11 +38,10 @@ function TeamDashboard() {
       if (projectFilter) params.project_id = projectFilter;
       if (weekStartFilter) params.week_start = weekStartFilter;
       if (weekEndFilter) params.week_end = weekEndFilter;
-      // ✅ Fixed: Added trailing slash
+    
       const response = await api.get('/reports/all_reports/', { params });
       let data = response.data || [];
       
-      // Managers should NOT see DRAFT reports
       data = data.filter(r => r.status !== 'DRAFT');
       
       return data;
@@ -68,7 +67,7 @@ function TeamDashboard() {
     return <span className={`${classes[status] || 'badge bg-secondary'} px-3 py-2`}>{status}</span>;
   };
 
-  // Get team members only
+  // Get team memmbers only
   const teamMembers = users?.filter(u => u.role === 'TEAM_MEMBER') || [];
 
   // Track submission status per team member

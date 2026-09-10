@@ -71,7 +71,7 @@ function ReportDetail() {
         )}
       </div>
 
-      {/* Manager Comment - More prominent for NEEDS_CORRECTION */}
+      {/* Manager Comment */}
       {report.manager_comment && (
         <div className={`alert ${report.status === 'NEEDS_CORRECTION' ? 'alert-warning' : 'alert-info'}`}>
           <strong>{report.status === 'NEEDS_CORRECTION' ? '⚠️ Manager\'s Feedback:' : 'Manager\'s Comment:'}</strong>
